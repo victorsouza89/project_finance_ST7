@@ -17,9 +17,6 @@ def get_msft(df, sedol):
             return yf.Ticker(df["Tickers"][i])
 
 
-todays_data = msft.history(period='1d')
-
-print(todays_data['Close'][0])
 
 """b)"""
 df2 = pd.read_excel(path, sheet_name="MarketCaps")
@@ -42,7 +39,7 @@ def nettoyage(df2):
 
 df2 = nettoyage(df2)
 
-
+"""
 """d)"""
 
 def get_price(date,share):
@@ -50,9 +47,6 @@ def get_price(date,share):
     todays_data = msft.history(period='20y')
     return todays_data["Close"][date]
 
-<<<<<<< HEAD
-print(get_price("2021-02-01",df["Tickers"][0]))
-=======
 def convert_date(date):
     return str(date.year) + "-" + str(date.month) + "-" + str(date.day)
 
@@ -82,7 +76,7 @@ msft = get_msft(df, sebol)
 todays_data = msft.history(period="20y")
 close = todays_data["Close"]
 
-get_rit(df, date=date, sebol=sebol)
+
 
 
 def get_indice(df2, t=100, N=300):
@@ -103,4 +97,21 @@ def get_indice(df2, t=100, N=300):
 
 date = 150
 rt = get_indice(df2, t=date, N=300)
->>>>>>> 5098765a8eb51ee64ab3d0251d248358f3b1d57c
+"""
+"""Exercise 3"""
+
+'a'
+
+def get_average_perf(year):
+    all_date=df2['date']
+    dates=[]
+    for x in all_date:
+        if str(x)[0:4] ==year:
+            dates.append(x)
+
+
+
+
+get_average_perf(1)
+
+
