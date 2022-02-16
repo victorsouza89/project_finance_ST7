@@ -66,6 +66,7 @@ def get_price(msft, date):
 
 def get_rit(date1, date2, msft):
     P_i_t = get_price(msft, date1)
+    print(type(P_i_t))
     P_i_tbefore = get_price(msft, date2)
     if (P_i_tbefore) == 0:
         return -1
