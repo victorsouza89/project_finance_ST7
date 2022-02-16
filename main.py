@@ -11,6 +11,10 @@ df = pd.read_excel(path, sheet_name="Mapping")
 msft = yf.Ticker(df["Tickers"][0])  # I don't know what to do with this
 
 
+todays_data = msft.history(period='1d')
+
+print(todays_data['Close'][0])
+
 """b)"""
 df2 = pd.read_excel(path, sheet_name="MarketCaps")
 df2 = df2.rename(columns={"Unnamed: 0": "date"})
@@ -35,22 +39,9 @@ df2 = nettoyage(df2)
 
 """d)"""
 
+def get_price(date,share):
+    msft = yf.Ticker(share)  
+    todays_data = msft.history(period='20y')
+    return todays_data["Close"][date]
 
-def get_indice(df2, t=100, N=300):
-    rt = 0
-    columns = df2.columns[1:]
-    for i in range(N):
-        # Calcul de r_t^i
-        company = df2[columns[i]]
-        r_i_t = 0
-        if company[t - 1] == 0:
-            r_i_t = 0
-        else:
-            r_i_t = company[t] / company[t - 1] - 1
-        rt += r_i_t
-
-    return rt
-
-
-date = 150
-rt = get_indice(df2, t=date, N=300)
+print(get_price("2021-02-01",df["Tickers"][0]))
