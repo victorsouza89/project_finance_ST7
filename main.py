@@ -48,10 +48,17 @@ def convert_date(date):
 
 def get_price(msft, date):
     todays_data = msft.history(period="20y")["Close"]
+    if list(todays_data) == []:
+        return 0
+
     todays_data = dict(todays_data)
     keys = list(todays_data.keys())
     if date in keys:
         return todays_data[date]
+
+    elif keys[0] > date:
+        return 0
+
     else:
         n = len(keys)
         for i in range(n):
@@ -63,7 +70,7 @@ def get_rit(date1, date2, msft):
     P_i_t = get_price(msft, date1)
     P_i_tbefore = get_price(msft, date2)
     if (P_i_tbefore) == 0:
-        return -1
+        return 0
     else:
         return P_i_t / P_i_tbefore - 1
 
@@ -74,13 +81,9 @@ def get_indice(df, df2, t=100, N=300):
     columns = df2.columns[1:]
     for i in range(N):
         print(i)
-        print("test1")
         company = df2[columns[i]]
 
-        print("test2")
         w_t_i = company[t]
-
-        print("test3")
 
         msft = get_msft(df, columns[i])
         r_t_i = get_rit(date1, date2, msft)
