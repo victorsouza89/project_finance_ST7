@@ -39,7 +39,7 @@ def nettoyage(df2):
 
 df2 = nettoyage(df2)
 
-"""
+
 """d)"""
 
 def get_price(date,share):
@@ -53,42 +53,42 @@ def convert_date(date):
 
 def get_price(msft, date):
     todays_data = msft.history(period="20y")["Close"]
+    todays_data = dict(todays_data)
+    keys = list(todays_data.keys())
+    if date in keys:
+        return todays_data[date]
+    else:
+        n = len(keys)
+        for i in range(n):
+            if keys[i] < date and keys[i + 1] > date:
+                return todays_data[keys[i]]
 
-    return todays_data["Close"][date]
 
-
-def get_rit(df, date, sebol):
-    msft = get_msft(df, sebol)
-    P_i_t = get_price(msft, convert_date(date))
-    P_i_tbefore = get_price(msft, convert_date(date))
+def get_rit(date1, date2, msft):
+    P_i_t = get_price(msft, date1)
+    P_i_tbefore = get_price(msft, date2)
     if (P_i_tbefore) == 0:
         return -1
     else:
-        return P_i_t
+        return P_i_t / P_i_tbefore - 1
 
 
-date = df2["date"][226]
-date_convert = convert_date(date)
-
-sebol = df2.columns[1]
-msft = get_msft(df, sebol)
-
-todays_data = msft.history(period="20y")
-close = todays_data["Close"]
-
-
-
-
-def get_indice(df2, t=100, N=300):
+def get_indice(df, df2, t=100, N=300):
     rt = 0
+    date1, date2 = df2["date"][t], df2["date"][t - 1]
     columns = df2.columns[1:]
     for i in range(N):
+        print(i)
+        print("test1")
         company = df2[columns[i]]
 
-        w_t_i = df2[i]
+        print("test2")
+        w_t_i = company[t]
 
-        r_t_i = 0
-        r_t_i = get_rit(df, df2["date"][t])
+        print("test3")
+
+        msft = get_msft(df, columns[i])
+        r_t_i = get_rit(date1, date2, msft)
 
         rt += w_t_i * r_t_i
 
@@ -96,22 +96,21 @@ def get_indice(df2, t=100, N=300):
 
 
 date = 150
-rt = get_indice(df2, t=date, N=300)
-"""
+rt = get_indice(df, df2, t=date, N=300)
+
+
 """Exercise 3"""
 
-'a'
+"a"
+
 
 def get_average_perf(year):
-    all_date=df2['date']
-    dates=[]
+    all_date = df2["date"]
+    dates = []
     for x in all_date:
-        if str(x)[0:4] ==year:
+        if str(x)[0:4] == year:
             dates.append(x)
 
 
-
-
 get_average_perf(1)
-
 
