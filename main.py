@@ -57,15 +57,19 @@ def convert_date(date):
 def get_price(msft, date):
     """Prend en argument un msft et une date au format timestamp, et renvoie un prix"""
     todays_data = msft.history(period="20y")["Close"]
-    todays_data = dict(todays_data)
-    keys = list(todays_data.keys())
+    if list(todays_data) == []:
+        return 0
+
+    keys = todays_data.index
+
     if date in keys:
         return todays_data[date]
     else:
         n = len(keys)
         for i in range(n):
-            if keys[i] < date and keys[i + 1] > date:
+            if keys[i+1] > date:
                 return todays_data[keys[i]]
+
 
 
 def get_rit(date1, date2, msft): 
@@ -78,7 +82,7 @@ def get_rit(date1, date2, msft):
         return P_i_t / P_i_tbefore - 1
 
 
-def get_indice(df, df2, t=100, N=300):
+def get_performance_indice(df, df2, t=100, N=300):
     """Calcule rt"""
     rt = 0
     date1, date2 = df2["date"][t], df2["date"][t - 1]
@@ -102,6 +106,8 @@ def get_indice(df, df2, t=100, N=300):
 date = 150
 #rt = get_indice(df, df2, t=date, N=3)
 #print(rt)
+rt = get_performance_indice(df, df2, t=date, N=300)
+
 
 """Exercise 3"""
 
