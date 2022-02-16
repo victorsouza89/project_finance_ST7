@@ -1,6 +1,7 @@
 import pandas as pd
 import yfinance as yf
 import math
+import numpy as np
 
 """Exercise 1"""
 
@@ -37,9 +38,9 @@ def nettoyage(df2):
 
     return df2
 
-
+print('Nettoyage en cours')
 df2 = nettoyage(df2)
-
+print('Nettoyage terminé')
 
 """d)"""
 
@@ -49,7 +50,7 @@ def get_price(date,share):
     return todays_data["Close"][date]
 
 def convert_date(date):
-    """Prend en argument une date au format timestamp, et renvoie "year-month-day""""
+    """Prend en argument une date au format timestamp, et renvoie "year-month-day"""
     return str(date.year) + "-" + str(date.month) + "-" + str(date.day)
 
 
@@ -85,10 +86,10 @@ def get_indice(df, df2, t=100, N=300):
     for i in range(N):
         company = df2[columns[i]]
 
-        print("test2")
+       
         w_t_i = company[t]
 
-        print("test3")
+        
 
         msft = get_msft(df, columns[i])
         r_t_i = get_rit(date1, date2, msft)
@@ -99,8 +100,8 @@ def get_indice(df, df2, t=100, N=300):
 
 
 date = 150
-rt = get_indice(df, df2, t=date, N=300)
-
+#rt = get_indice(df, df2, t=date, N=3)
+#print(rt)
 
 """Exercise 3"""
 
@@ -110,10 +111,32 @@ rt = get_indice(df, df2, t=date, N=300)
 def get_average_perf(year):
     all_date = df2["date"]
     dates = []
-    for x in all_date:
+    for i,x in enumerate(all_date):
+        
         if str(x)[0:4] == year:
-            dates.append(x)
+            dates.append(i)
+
+    return np.mean([get_indice(df, df2, t=x, N=1) for x in dates])
 
 
-get_average_perf(1)
+print(get_average_perf("2021"))
+
+def get_deviation_perf(year):
+    all_date = df2["date"]
+    dates = []
+    for i,x in enumerate(all_date):
+        
+        if str(x)[0:4] == year:
+            dates.append(i)
+
+    return np.std([get_indice(df, df2, t=x, N=1) for x in dates])
+
+print(get_deviation_perf("2021"))
+
+def get_indice(perf_list):
+    p_0=0
+    indice=[p_0]
+    for x in perf_list:
+        indice.append(indice[-1]*x+1)
+    return indice
 
