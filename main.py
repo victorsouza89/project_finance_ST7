@@ -11,6 +11,7 @@ df = pd.read_excel(path, sheet_name="Mapping")
 
 
 def get_msft(df, sedol):
+    """Prend en argument un sedol et renvoie le msft correspondant"""
     n = len(df)
     for i in range(n):
         if str(df["Sedol"][i]) == str(sedol):
@@ -48,10 +49,12 @@ def get_price(date,share):
     return todays_data["Close"][date]
 
 def convert_date(date):
+    """Prend en argument une date au format timestamp, et renvoie "year-month-day""""
     return str(date.year) + "-" + str(date.month) + "-" + str(date.day)
 
 
 def get_price(msft, date):
+    """Prend en argument un msft et une date au format timestamp, et renvoie un prix"""
     todays_data = msft.history(period="20y")["Close"]
     todays_data = dict(todays_data)
     keys = list(todays_data.keys())
@@ -64,7 +67,8 @@ def get_price(msft, date):
                 return todays_data[keys[i]]
 
 
-def get_rit(date1, date2, msft):
+def get_rit(date1, date2, msft): 
+    """Calcule r_i_t entre une date1 et une date 2 pour un msft"""
     P_i_t = get_price(msft, date1)
     P_i_tbefore = get_price(msft, date2)
     if (P_i_tbefore) == 0:
@@ -74,6 +78,7 @@ def get_rit(date1, date2, msft):
 
 
 def get_indice(df, df2, t=100, N=300):
+    """Calcule rt"""
     rt = 0
     date1, date2 = df2["date"][t], df2["date"][t - 1]
     columns = df2.columns[1:]
