@@ -4,6 +4,7 @@ import math
 import numpy as np
 import os
 import pickle
+import matplotlib.pyplot as plt
 
 clearConsole = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear')
 
@@ -64,20 +65,21 @@ def get_price(msft_list, date_list):
     price_database={}
   
     for msft in msft_list:
+        print(str(msft))
         todays_data = msft.history(period="20y", interval="1d")["Close"]
         for date in date_list:
             if list(todays_data) == []:
-                price_database[(msft,date)]= 0
+                price_database[(str(msft),str(date))]= 0
 
             keys = todays_data.index
 
             if date in keys:
-                price_database[(msft,date)]= todays_data[date]
+                price_database[(str(msft),str(date))]= todays_data[date]
             else:
                 n = len(keys)
                 for i in range(n-1):
                     if keys[i+1] > date:
-                        price_database[(msft,date)]=todays_data[keys[i]]
+                        price_database[(str(msft),str(date))]=todays_data[keys[i]]
     return price_database
 
 print("Creating Database...")
@@ -91,8 +93,8 @@ print("Database completed")
 
 def get_rit(date1, date2, msft,price_database): 
     """Calcule r_i_t entre une date1 et une date 2 pour un msft"""
-    P_i_t = price_database[(msft,convert_date(date1))]
-    P_i_tbefore = price_database[(msft,convert_date(date2))]
+    P_i_t = price_database[str(msft),str(date1)]
+    P_i_tbefore = price_database[str(msft),str(date2)]
     if (P_i_tbefore) == 0:
         return -1
     else:
@@ -111,7 +113,11 @@ def get_performance_indice(df, df2, price_database, t=100, N=300):
         w_t_i = company[t]
 
         msft = get_msft(df, columns[i])
-        r_t_i = get_rit(date1, date2, msft,price_database)
+        try:
+
+            r_t_i = get_rit(date1, date2, msft,price_database)
+        except:
+            r_t_i=0
 
         rt += w_t_i * r_t_i
 
@@ -121,8 +127,8 @@ def get_performance_indice(df, df2, price_database, t=100, N=300):
 date = 150
 #rt = get_indice(df, df2, t=date, N=3)
 #print(rt)
-rt = get_performance_indice(df, df2,price_database,t=date, N=30)
-print(rt)
+rt = get_performance_indice(df, df2,price_database,t=date, N=500)
+print("indice "+str(rt))
 
 """Exercise 3"""
 
@@ -137,10 +143,10 @@ def get_average_perf(year):
         if str(x)[0:4] == year:
             dates.append(i)
 
-    return np.mean([get_performance_indice(df, df2, price_database,t=x, N=1) for x in dates])
+    return np.mean([get_performance_indice(df, df2, price_database,t=x, N=500) for x in dates])
 
 
-print(get_average_perf("2021"))
+print("moyenne " +str(get_average_perf("2021")))
 
 def get_deviation_perf(year):
     all_date = df2["date"]
@@ -150,14 +156,18 @@ def get_deviation_perf(year):
         if str(x)[0:4] == year:
             dates.append(i)
 
-    return np.std([get_performance_indice(df, df2,price_database, t=x, N=300) for x in dates])
+    return np.std([get_performance_indice(df, df2,price_database, t=x, N=500) for x in dates])
 
-print(get_deviation_perf("2021"))
+print("deviation "+str(get_deviation_perf("2021")))
 
 def get_indice(perf_list):
-    p_0=0
+    p_0=1
     indice=[p_0]
     for x in perf_list:
         indice.append(indice[-1]*x+1)
     return indice
+
+all_rt=[get_performance_indice(df, df2,price_database,t, N=100) for t in range(1,100,5)]
+plt.plot(all_rt)
+plt.show()
 
