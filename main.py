@@ -2,6 +2,12 @@ import pandas as pd
 import yfinance as yf
 import math
 import numpy as np
+import os
+import pickle
+
+clearConsole = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear')
+
+
 
 """Exercise 1"""
 
@@ -40,49 +46,60 @@ def nettoyage(df2):
 
 print('Nettoyage en cours')
 df2 = nettoyage(df2)
-print('Nettoyage terminé')
 
+clearConsole()
+print('Nettoyage terminé')
 """d)"""
 
-def get_price(date,share):
-    msft = yf.Ticker(share)  
-    todays_data = msft.history(period='20y')
-    return todays_data["Close"][date]
+
+
 
 def convert_date(date):
     """Prend en argument une date au format timestamp, et renvoie "year-month-day"""
     return str(date.year) + "-" + str(date.month) + "-" + str(date.day)
 
 
-def get_price(msft, date):
+def get_price(msft_list, date_list):
     """Prend en argument un msft et une date au format timestamp, et renvoie un prix"""
-    todays_data = msft.history(period="20y")["Close"]
-    if list(todays_data) == []:
-        return 0
+    price_database={}
+  
+    for msft in msft_list:
+        todays_data = msft.history(period="20y", interval="1d")["Close"]
+        for date in date_list:
+            if list(todays_data) == []:
+                price_database[(msft,date)]= 0
 
-    keys = todays_data.index
+            keys = todays_data.index
 
-    if date in keys:
-        return todays_data[date]
-    else:
-        n = len(keys)
-        for i in range(n):
-            if keys[i+1] > date:
-                return todays_data[keys[i]]
+            if date in keys:
+                price_database[(msft,date)]= todays_data[date]
+            else:
+                n = len(keys)
+                for i in range(n-1):
+                    if keys[i+1] > date:
+                        price_database[(msft,date)]=todays_data[keys[i]]
+    return price_database
+
+print("Creating Database...")
+all_date=df2["date"]
+all_msft=[get_msft(df, sedol) for sedol in df['Sedol']]
+#price_database=get_price(all_msft,all_date)
+#pickle.dump( price_database, open( "price.p", "wb" ) )
+price_database=pickle.load( open( "price.p", "rb" ) )
+print("Database completed")
 
 
-
-def get_rit(date1, date2, msft): 
+def get_rit(date1, date2, msft,price_database): 
     """Calcule r_i_t entre une date1 et une date 2 pour un msft"""
-    P_i_t = get_price(msft, date1)
-    P_i_tbefore = get_price(msft, date2)
+    P_i_t = price_database[(msft,convert_date(date1))]
+    P_i_tbefore = price_database[(msft,convert_date(date2))]
     if (P_i_tbefore) == 0:
         return -1
     else:
         return P_i_t / P_i_tbefore - 1
 
 
-def get_performance_indice(df, df2, t=100, N=300):
+def get_performance_indice(df, df2, price_database, t=100, N=300):
     """Calcule rt"""
     rt = 0
     date1, date2 = df2["date"][t], df2["date"][t - 1]
@@ -93,10 +110,8 @@ def get_performance_indice(df, df2, t=100, N=300):
        
         w_t_i = company[t]
 
-        
-
         msft = get_msft(df, columns[i])
-        r_t_i = get_rit(date1, date2, msft)
+        r_t_i = get_rit(date1, date2, msft,price_database)
 
         rt += w_t_i * r_t_i
 
@@ -106,8 +121,8 @@ def get_performance_indice(df, df2, t=100, N=300):
 date = 150
 #rt = get_indice(df, df2, t=date, N=3)
 #print(rt)
-rt = get_performance_indice(df, df2, t=date, N=300)
-
+rt = get_performance_indice(df, df2,price_database,t=date, N=30)
+print(rt)
 
 """Exercise 3"""
 
@@ -122,7 +137,7 @@ def get_average_perf(year):
         if str(x)[0:4] == year:
             dates.append(i)
 
-    return np.mean([get_indice(df, df2, t=x, N=1) for x in dates])
+    return np.mean([get_performance_indice(df, df2, price_database,t=x, N=1) for x in dates])
 
 
 print(get_average_perf("2021"))
@@ -135,7 +150,7 @@ def get_deviation_perf(year):
         if str(x)[0:4] == year:
             dates.append(i)
 
-    return np.std([get_indice(df, df2, t=x, N=1) for x in dates])
+    return np.std([get_performance_indice(df, df2,price_database, t=x, N=300) for x in dates])
 
 print(get_deviation_perf("2021"))
 
