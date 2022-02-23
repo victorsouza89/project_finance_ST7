@@ -26,7 +26,7 @@ def get_volatility(weight,rho):
     v=0
     for i in range(len(weight)):
         for j in range(len(weight)):
-            v+=weight[i]*weight[j]*rho[i,j]
+            v+=weight[0,i]*weight[0,j]*rho[i,j]
     return v
 
 w=weight()
