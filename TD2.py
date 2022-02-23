@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import cvxpy as cp
+import matplotlib.pyplot as plt
 
 """ex1"""
 'a'
-volatility = np.array([[14.3,17.4,21.2,4.3,4,8.4,0.5]])
+volatility = 0.01*np.array([[14.3,17.4,21.2,4.3,4,8.4,0.5]])
 mu = np.array([[6,7,9.5,1.5,1.3,3.2,0]])
 rho =  np.array([[1,0.82,0.78,0.1,0,0.5,0],[0.82,1,0.85,0.12,0.08,0.63,0],[0.78,0.85,1,0.05,0.03,0.71,0],[0.1,0.12,0.05,1,0.65,0.2,0],[0,0.08,0.03,0.65,1,0.23,0],[0.5,0.63,0.71,0.2,0.23,1,0],[0,0,0,0,0,0,1]])
 
@@ -29,13 +30,19 @@ def get_volatility(weight,rho):
             v+=weight[0,i]*weight[0,j]*rho[i,j]
     return v
 
+def get_return(weight,mu):
+    v=0
+    return (mu@weight.T)[0,0]
+
 w=weight()
 print("weight")
 print(w)  
 print("volatility")
 print(get_volatility(w,rho))
-
+print("return")
+print(get_return(w,mu))
 'c'
+
 def weight_cp():
     n=len(volatility[0])
     delta=get_delta(rho,volatility)
@@ -50,6 +57,43 @@ def weight_cp():
 print(weight_cp())
 
 
-"""ex2"""
+"""ex3"""
+
+retur=[]
+vol=[]
+for lam in np.linspace(150,1000,10000):
+    w=weight(lambd=lam)
+    retur.append(get_return(w,mu))
+    vol.append(get_volatility(w,rho))
+plt.plot(vol,retur)
+plt.show()
+
+"""ex4"""
+def weight_constraint_cp(lamb):
+    n=len(volatility[0])
+    delta=get_delta(rho,volatility)
+    w = cp.Variable(n)
+    gamma = lamb
+    ret = mu@w 
+    risk = cp.quad_form(w, delta)
+    prob = cp.Problem(cp.Maximize(ret - gamma*risk),[cp.sum(w) == 1, 
+                w >= 0])
+    prob.solve()
+    
+    return w.value,risk.value,ret.value 
+
+retur=[]
+vol=[]
+for lam in np.linspace(0.001,5000,500):
+    w,v,r=weight_constraint_cp(lam)
+    retur.append(r)
+    vol.append(v)
+plt.plot(vol,retur)
+plt.show()
+
+
+
+
+
 
 
