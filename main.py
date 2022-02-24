@@ -146,7 +146,7 @@ def get_average_perf(year):
     return np.mean([get_performance_indice(df, df2, price_database,t=x, N=500) for x in dates])
 
 
-print("moyenne " +str(get_average_perf("2021")))
+#print("moyenne " +str(get_average_perf("2021")))
 
 def get_deviation_perf(year):
     all_date = df2["date"]
@@ -158,7 +158,7 @@ def get_deviation_perf(year):
 
     return np.std([get_performance_indice(df, df2,price_database, t=x, N=500) for x in dates])
 
-print("deviation "+str(get_deviation_perf("2021")))
+#print("deviation "+str(get_deviation_perf("2021")))
 
 def get_indice(perf_list):
     p_0=1
@@ -167,7 +167,29 @@ def get_indice(perf_list):
         indice.append(indice[-1]*x+1)
     return indice
 
-all_rt=[get_performance_indice(df, df2,price_database,t, N=100) for t in range(1,100,5)]
-plt.plot(all_rt)
-plt.show()
+#all_rt=[get_performance_indice(df, df2,price_database,t, N=100) for t in range(1,100,5)]
+#plt.plot(all_rt)
+#plt.show()
 
+def get_all_rti(N,price_database,df2):
+    d={"Dates" : df2["date"][1:]}
+    columns = df2.columns[1:]
+    for i in range(N):
+        liste=[]
+        msft,sedol=get_msft(df, columns[i]),columns[i]
+        for t in range(1,len(df2["date"])):
+            date1, date2 = df2["date"][t], df2["date"][t - 1]
+            
+            try:
+
+                r_t_i = get_rit(date1, date2, msft,price_database)
+            except:
+                r_t_i=0
+            liste.append(r_t_i)
+        d[sedol]=liste
+    return d
+
+
+df_rit = pd.DataFrame(data=get_all_rti(300,price_database,df2))
+print(df_rit)
+df_rit.to_csv("performance.csv",sep=';',index=False)
