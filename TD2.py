@@ -71,7 +71,7 @@ plt.plot(vol,retur)
 plt.show()
 '''
 """ex4"""
-def weight_constraint_cp(lamb):
+def weight_constraint_cp(lamb,rho,volatility,mu,delta):
     n=len(volatility[0])
     delta=get_delta(rho,volatility)
     w = cp.Variable(n)
@@ -87,7 +87,7 @@ def weight_constraint_cp(lamb):
 retur=[]
 vol=[]
 for lam in np.linspace(0.001,5000,500):
-    w,v,r=weight_constraint_cp(lam)
+    w,v,r=weight_constraint_cp(lam,rho,volatility,mu,delta)
     retur.append(r)
     vol.append(v)
     '''
@@ -136,8 +136,25 @@ def sigma_estimate(date):
         sigmat[i,i]=0
     return sigma+sigmat
 
-a=sigma_estimate('2021-10-31')
-np.savetxt('test.csv', a, delimiter=';') 
+#a=sigma_estimate('2021-10-31')
+#np.savetxt('test.csv', a, delimiter=';') 
+
+def get_weight(date,lamb=1):
+    mu=mu_estimate(date)
+    sigma=sigma_estimate(date)
+    n=len(sigma[0])
+    w = cp.Variable(n)
+    gamma = lamb
+    ret = mu@w 
+    risk = cp.quad_form(w, sigma)
+    prob = cp.Problem(cp.Maximize(ret - gamma*risk),[cp.sum(w) == 1, 
+                w >= 0])
+    prob.solve()
+    
+    return w.value,risk.value,ret.value 
+
+print(get_weight('2021-10-31'))
+
 
 
 
