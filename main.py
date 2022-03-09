@@ -46,7 +46,7 @@ def nettoyage(df2):
     return df2
 
 print('Nettoyage en cours')
-df2 = nettoyage(df2)
+#df2 = nettoyage(df2)
 
 clearConsole()
 print('Nettoyage terminé')
@@ -67,6 +67,10 @@ def get_price(msft_list, date_list):
     for msft in msft_list:
         print(str(msft))
         todays_data = msft.history(period="20y", interval="1d")["Close"]
+        for date in todays_data.index:
+            price_database[(str(msft),str(date))]= todays_data[date]
+
+        '''
         for date in date_list:
             if list(todays_data) == []:
                 price_database[(str(msft),str(date))]= 0
@@ -80,15 +84,19 @@ def get_price(msft_list, date_list):
                 for i in range(n-1):
                     if keys[i+1] > date:
                         price_database[(str(msft),str(date))]=todays_data[keys[i]]
+        '''
     return price_database
 
 print("Creating Database...")
-all_date=df2["date"]
-all_msft=[get_msft(df, sedol) for sedol in df['Sedol']]
+#all_date=df2["date"]
+#all_msft=[get_msft(df, sedol) for sedol in df['Sedol']]
 #price_database=get_price(all_msft,all_date)
 #pickle.dump( price_database, open( "price.p", "wb" ) )
-price_database=pickle.load( open( "price.p", "rb" ) )
+#price_database=pickle.load( open( "price.p", "rb" ) )
+#all_dates=list(pickle.load( open( "all_dates.p", "rb" ) ))
 print("Database completed")
+#print(price_database)
+#print(all_dates)
 
 
 def get_rit(date1, date2, msft,price_database): 
@@ -96,7 +104,7 @@ def get_rit(date1, date2, msft,price_database):
     P_i_t = price_database[str(msft),str(date1)]
     P_i_tbefore = price_database[str(msft),str(date2)]
     if (P_i_tbefore) == 0:
-        return -1
+        return 0
     else:
         return P_i_t / P_i_tbefore - 1
 
@@ -104,17 +112,15 @@ def get_rit(date1, date2, msft,price_database):
 def get_performance_indice(df, df2, price_database, t=100, N=300):
     """Calcule rt"""
     rt = 0
-    date1, date2 = df2["date"][t], df2["date"][t - 1]
+    all_dates=pickle.load( open( "all_dates.p", "rb" ) )
+    perf=pd.read_excel("performance.csv",sep=';')
+    date1, date2 = all_dates[t], all_dates[t - 1]
     columns = df2.columns[1:]
     for i in range(N):
         company = df2[columns[i]]
-
-       
         w_t_i = company[t]
-
         msft = get_msft(df, columns[i])
         try:
-
             r_t_i = get_rit(date1, date2, msft,price_database)
         except:
             r_t_i=0
@@ -127,8 +133,8 @@ def get_performance_indice(df, df2, price_database, t=100, N=300):
 date = 150
 #rt = get_indice(df, df2, t=date, N=3)
 #print(rt)
-rt = get_performance_indice(df, df2,price_database,t=date, N=500)
-print("indice "+str(rt))
+#rt = get_performance_indice(df, df2,price_database,t=date, N=500)
+#print("indice "+str(rt))
 
 """Exercise 3"""
 
@@ -172,13 +178,14 @@ def get_indice(perf_list):
 #plt.show()
 
 def get_all_rti(N,price_database,df2):
-    d={"Dates" : df2["date"][1:]}
+    all_dates=pickle.load( open( "all_dates.p", "rb" ) )
+    d={"Dates" : all_dates[1:]}
     columns = df2.columns[1:]
     for i in range(N):
         liste=[]
         msft,sedol=get_msft(df, columns[i]),columns[i]
-        for t in range(1,len(df2["date"])):
-            date1, date2 = df2["date"][t], df2["date"][t - 1]
+        for t in range(1,len(all_dates)):
+            date1, date2 = all_dates[t], all_dates[t - 1]
             
             try:
 
@@ -189,7 +196,84 @@ def get_all_rti(N,price_database,df2):
         d[sedol]=liste
     return d
 
+def get_cov(date):
+    all_dates=pickle.load( open( "all_dates.p", "rb" ) )
+    t=0
+    for i in range(len(all_dates)):
+        if all_dates[i]==date:
+            t=i
+    if t<=5000:
+        return [[0]]
+    perf=pd.read_csv('performance.csv',sep=';')
+    columns = df2.columns[1:]
+    data=[]
+    for i in range(len(columns)):
+            sedol=columns[i]
+            liste=perf[str(sedol)][t-600:t]
+            data.append(liste)
+    return(np.cov(data))
+            
 
-df_rit = pd.DataFrame(data=get_all_rti(300,price_database,df2))
+
+
+
+
+def get_all_indicators(df2):
+    dates=df2["date"]
+    all_dates=pickle.load( open( "all_dates.p", "rb" ) )
+    perf=pd.read_csv('performance.csv',sep=';')
+    r={}
+    for j,date in enumerate(dates):
+        t=0
+        for i in range(len(all_dates)):
+            if all_dates[i]==date:
+                t=i
+        columns = df2.columns[1:]
+        rt=0
+        for i in range(len(columns)):
+            company = df2[columns[i]]
+            w_t_i = company[j]
+            sedol=columns[i]
+            r_t_i = perf[str(sedol)][t]
+            rt+=w_t_i*r_t_i
+        r[date]=[rt]
+
+    return r
+
+def get_all_indicators2(df2):
+    dates=df2["date"]
+    all_dates=pickle.load( open( "all_dates.p", "rb" ) )
+    perf=pd.read_csv('performance.csv',sep=';')
+    risque={}
+    for j,date in enumerate(dates):
+        print(date)
+        t=0
+        for i in range(len(all_dates)):
+            if all_dates[i]==date:
+                t=i
+        columns = df2.columns[1:]
+        risquet=0
+        covariance=get_cov(date)
+        if covariance[0][0]==0:
+            risquet=0
+        else:
+            for a in range(len(columns)):
+                for b in range(len(columns)):
+                    risquet+=covariance[a,b]*df2[columns[a]][j]*df2[columns[b]][j]
+        risque[date]=[risquet]
+     
+
+    return risque
+            
+df_rit = pd.DataFrame(data=get_all_indicators2(df2))
+df_rit.to_csv("indicators2.csv",sep=';')
+            
+        
+        
+
+
+'''
+df_rit = pd.DataFrame(data=get_all_rti(len(df2.columns[1:]),price_database,df2))
 print(df_rit)
 df_rit.to_csv("performance.csv",sep=';',index=False)
+'''
