@@ -91,7 +91,7 @@ def get_price(msft_list, date_list):
 print("Creating Database...")
 all_date=df2["date"]
 all_msft=[get_msft(df, sedol) for sedol in df['Sedol']]
-price_database=get_price(all_msft,all_date)
+#price_database=get_price(all_msft,all_date)
 #pickle.dump( price_database, open( "price.p", "wb" ) )
 price_database=pickle.load( open( "price.p", "rb" ) )
 #all_dates=list(pickle.load( open( "all_dates.p", "rb" ) ))
@@ -265,16 +265,16 @@ def get_all_indicators2(df2):
      
 
     return risque
-            
+"""           
 df_rit = pd.DataFrame(data=get_all_indicators2(df2))
 df_rit.to_csv("indicators2.csv",sep=';')
-            
+"""            
         
         
 
 
-'''
+''''''
 df_rit = pd.DataFrame(data=get_all_rti(len(df2.columns[1:]),price_database,df2))
 print(df_rit)
 df_rit.to_csv("performance.csv",sep=';',index=False)
-'''
+''''''
