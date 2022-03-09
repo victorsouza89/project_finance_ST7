@@ -67,7 +67,7 @@ def get_price(msft_list, date_list):
     for msft in msft_list:
         print(str(msft))
         todays_data = msft.history(period="20y", interval="1d")["Close"]
-        #pickle.dump( todays_data.index, open( "all_dates.p", "wb" )    )
+        pickle.dump( todays_data.index, open( "all_dates.p", "wb" )    )
         for date in todays_data.index:
             price_database[(str(msft),str(date))]= todays_data[date]
 
@@ -91,7 +91,7 @@ def get_price(msft_list, date_list):
 print("Creating Database...")
 all_date=df2["date"]
 all_msft=[get_msft(df, sedol) for sedol in df['Sedol']]
-#price_database=get_price(all_msft,all_date)
+price_database=get_price(all_msft,all_date)
 #pickle.dump( price_database, open( "price.p", "wb" ) )
 price_database=pickle.load( open( "price.p", "rb" ) )
 #all_dates=list(pickle.load( open( "all_dates.p", "rb" ) ))
