@@ -4,6 +4,9 @@ from numpy.linalg import inv
 import cvxpy as cp
 import matplotlib.pyplot as plt
 import pandas as pd
+import main
+import pickle
+
 #import main.py as main
 
 """ex1"""
@@ -11,6 +14,9 @@ import pandas as pd
 volatility = 0.01*np.array([[14.3,17.4,21.2,4.3,4,8.4,0.5]])
 mu = np.array([[6,7,9.5,1.5,1.3,3.2,0]])
 rho =  np.array([[1,0.82,0.78,0.1,0,0.5,0],[0.82,1,0.85,0.12,0.08,0.63,0],[0.78,0.85,1,0.05,0.03,0.71,0],[0.1,0.12,0.05,1,0.65,0.2,0],[0,0.08,0.03,0.65,1,0.23,0],[0.5,0.63,0.71,0.2,0.23,1,0],[0,0,0,0,0,0,1]])
+path = "DataProjets.xlsx"
+df2 = pd.read_excel(path, sheet_name="MarketCaps")
+df2 = df2.rename(columns={"Unnamed: 0": "date"})
 
 
 def get_delta(rho,volatility):
@@ -104,37 +110,17 @@ def mu_estimate(date):
     dates=perf_list['Dates']
     j=0
     for i in range(len(dates)):
-        if dates[i]==date:
+        if str(dates[i]+' 00:00:00')==str(date):
             j=i
-    if j>=23:
-        return [np.mean([perf_list[sedol][i] for i in range(j-23,j+1) ]) for sedol in   sedol_list  ]
+    if j>=5000:
+        return [np.mean([perf_list[sedol][i] for i in range(j-600,j) ]) for sedol in   sedol_list  ]
     else:
-        return [np.mean([perf_list[sedol][i] for i in range(j) ]) for sedol in   sedol_list  ]
+        return [0 for _ in range(len(sedol_list))]
 
 
 
 def sigma_estimate(date):
-    perf_list=pd.read_csv('performance.csv',sep=';')
-    sedol_list=perf_list.keys()[1:]
-    n=len(sedol_list)
-    dates=perf_list['Dates']
-    index=0
-    for i in range(len(dates)):
-        if dates[i]==date:
-            index=i
-    mu=mu_estimate(date)
-    sigma=np.zeros((n,n))
-    for i in range(n):
-        for j in range(i,n):
-            if index>=23:
-                liste=[(perf_list[   sedol_list[i] ][t] - mu[i])*(perf_list[sedol_list[j]][t] - mu[j])  for t in range(index-23,index+1)] 
-                sigma[i,j]=np.mean(  liste )
-            else:
-                sigma[i,j]=np.mean( [(perf_list[sedol_list[i]][t] - mu[i])*(perf_list[sedol_list[j]][t] - mu[j])  for t in range(index)]   )
-    sigmat=(sigma.copy()).T
-    for i in range(n):
-        sigmat[i,i]=0
-    return sigma+sigmat
+    return main.get_cov(date)
 
 #a=sigma_estimate('2021-10-31')
 #np.savetxt('test.csv', a, delimiter=';') 
@@ -142,7 +128,9 @@ def sigma_estimate(date):
 def get_weight(date,lamb=1):
     mu=mu_estimate(date)
     sigma=sigma_estimate(date)
-    n=len(sigma[0])
+    n=len(mu)
+    if sigma[0][0]==0:
+        return [0 for _ in range(n)],0,0
     w = cp.Variable(n)
     gamma = lamb
     ret = mu@w 
@@ -153,8 +141,24 @@ def get_weight(date,lamb=1):
     
     return w.value,risk.value,ret.value 
 
-print(get_weight('2021-10-31'))
+#print(get_weight('2021-10-31'))
 
+def get_all_weights(df2):
+    all_dates=df2['date']
+    liste=[]
+    for date in all_dates:
+        print(date)
+        try:
+            w,risk,perf=get_weight(date)
+            liste.append([str(date),str(perf),str(risk)]+[str(x) for x in w])
+
+        except:
+            print('fail')
+            
+    return liste
+
+liste=get_all_weights(df2)
+np.savetxt('weight_opti.csv', liste, delimiter=';') 
 
 
 

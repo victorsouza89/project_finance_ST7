@@ -203,7 +203,7 @@ def get_cov(date):
     for i in range(len(all_dates)):
         if all_dates[i]==date:
             t=i
-    if t<=600:
+    if t<=5000:
         return [[0]]
     perf=pd.read_csv('performance.csv',sep=';')
     columns = df2.columns[1:]
@@ -214,8 +214,16 @@ def get_cov(date):
             data.append(liste)
     return(np.cov(data))
             
+def get_all_cov():
+    all_dates=df2['date']
+    dic={}
+    for date in all_dates:
+        print(date)
+        dic[str(date)]=[get_cov(date)]
+    return dic
 
 
+#pickle.dump( get_all_cov(), open( "all_cov.p", "wb" ) )
 
 
 
@@ -266,8 +274,8 @@ def get_all_indicators2(df2):
 
     return risque
 
-df_rit = pd.DataFrame(data=get_all_indicators2(df2))
-df_rit.to_csv("indicators2.csv",sep=';')
+#df_rit = pd.DataFrame(data=get_all_indicators2(df2))
+#df_rit.to_csv("indicators2.csv",sep=';')
            
         
         
