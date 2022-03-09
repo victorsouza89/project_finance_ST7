@@ -1,10 +1,10 @@
 import numpy as np
-
 np.set_printoptions(precision=3)
 import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import cvxpy as cp
 from copy import deepcopy
+
 
 """ex1"""
 """a"""
@@ -140,9 +140,12 @@ def weight_cp(rho, volatility, mu, lambd, kappa, mode="sigma"):
             omega[i][i] = 1
 
     w = cp.Variable(n)
-    ret = mu @ w
+    ret = mu.T @ w
 
-    ret2 = cp.sqrt(cp.quad_form(w, omega))
+    omegaEigenvalues, omegaEigenvectors = np.linalg.eig(omega)
+    omegaD = np.diag(omegaEigenvalues)
+
+    ret2 = cp.norm(np.sqrt(omegaD) @ omegaEigenvectors @ w)
 
     risk = cp.quad_form(w, sigma)
 
