@@ -17,7 +17,7 @@ rho =  np.array([[1,0.82,0.78,0.1,0,0.5,0],[0.82,1,0.85,0.12,0.08,0.63,0],[0.78,
 path = "DataProjets.xlsx"
 df2 = pd.read_excel(path, sheet_name="MarketCaps")
 df2 = df2.rename(columns={"Unnamed: 0": "date"})
-
+base=pd.read_csv('indicators.csv',sep=';')
 
 def get_delta(rho,volatility):
     n=len(volatility[0])
@@ -103,16 +103,16 @@ plt.show()
 
 """Projet"""
 
+perf_list=pd.read_csv('performance.csv',sep=';')
+def mu_estimate(date,perf_list=perf_list):
 
-def mu_estimate(date):
-    perf_list=pd.read_csv('performance.csv',sep=';')
     sedol_list=perf_list.keys()[1:]
     dates=perf_list['Dates']
     j=0
     for i in range(len(dates)):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
-    if j>=5000:
+    if j>=600:
         return [np.mean([perf_list[sedol][i] for i in range(j-600,j) ]) for sedol in   sedol_list  ]
     else:
         return [0 for _ in range(len(sedol_list))]
@@ -125,40 +125,44 @@ def sigma_estimate(date):
 #a=sigma_estimate('2021-10-31')
 #np.savetxt('test.csv', a, delimiter=';') 
 
-def get_weight(date,lamb=1):
+def get_weight(date,volatility):
     mu=mu_estimate(date)
-    sigma=sigma_estimate(date)
     n=len(mu)
+    sigma=sigma_estimate(date)
     if sigma[0][0]==0:
         return [0 for _ in range(n)],0,0
+    sigma=sigma+0.001*np.identity(n)
     w = cp.Variable(n)
-    gamma = lamb
     ret = mu@w 
     risk = cp.quad_form(w, sigma)
-    prob = cp.Problem(cp.Maximize(ret - gamma*risk),[cp.sum(w) == 1, 
-                w >= 0])
+    prob = cp.Problem(cp.Maximize(ret),[cp.sum(w) == 1, 
+                w >= 0,risk<=volatility  ])
     prob.solve()
     
     return w.value,risk.value,ret.value 
 
 #print(get_weight('2021-10-31'))
 
-def get_all_weights(df2):
+def get_all_weights(df2,base=base):
     all_dates=df2['date']
     liste=[]
     for date in all_dates:
         print(date)
         try:
-            w,risk,perf=get_weight(date)
-            liste.append([str(date),str(perf),str(risk)]+[str(x) for x in w])
-
+            volatility=base[str(date)[0:10]][1]
+            w,risk,perf=get_weight(date,volatility)
+            liste.append([str(date)[0:10],str(perf),str(risk)]+[str(x) for x in w])
+            print(risk,perf)
         except:
             print('fail')
-            
     return liste
 
 liste=get_all_weights(df2)
-np.savetxt('weight_opti.csv', liste, delimiter=';') 
+import csv
+with open('output.csv','w',newline="") as result_file:
+    wr = csv.writer(result_file,delimiter=";")
+    wr.writerows(liste)
+
 
 
 

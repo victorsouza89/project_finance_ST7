@@ -196,16 +196,17 @@ def get_all_rti(N,price_database,df2):
             liste.append(r_t_i)
         d[sedol]=liste
     return d
+all_dates=pickle.load( open( "all_dates.p", "rb" ) )
+perf=pd.read_csv('performance.csv',sep=';')
+def get_cov(date,all_dates=all_dates,perf=perf):
 
-def get_cov(date):
-    all_dates=pickle.load( open( "all_dates.p", "rb" ) )
     t=0
     for i in range(len(all_dates)):
         if all_dates[i]==date:
             t=i
-    if t<=5000:
+    if t<=600:
         return [[0]]
-    perf=pd.read_csv('performance.csv',sep=';')
+
     columns = df2.columns[1:]
     data=[]
     for i in range(len(columns)):
@@ -213,7 +214,21 @@ def get_cov(date):
             liste=perf[str(sedol)][t-600:t]
             data.append(liste)
     return(np.cov(data))
-            
+
+perf_list=pd.read_csv('performance.csv',sep=';')
+def mu_estimate(date,perf_list=perf_list):
+
+    sedol_list=perf_list.keys()[1:]
+    dates=perf_list['Dates']
+    j=0
+    for i in range(len(dates)):
+        if str(dates[i]+' 00:00:00')==str(date):
+            j=i
+    if j>=600:
+        return [np.mean([perf_list[sedol][i] for i in range(j-600,j) ]) for sedol in   sedol_list  ]
+    else:
+        return [0 for _ in range(len(sedol_list))]
+
 def get_all_cov():
     all_dates=df2['date']
     dic={}
@@ -229,22 +244,24 @@ def get_all_cov():
 
 def get_all_indicators(df2):
     dates=df2["date"]
-    all_dates=pickle.load( open( "all_dates.p", "rb" ) )
-    perf=pd.read_csv('performance.csv',sep=';')
+    #all_dates=pickle.load( open( "all_dates.p", "rb" ) )
+    #perf=pd.read_csv('performance.csv',sep=';')
     r={}
     for j,date in enumerate(dates):
-        t=0
-        for i in range(len(all_dates)):
-            if all_dates[i]==date:
-                t=i
+        #print(date)
+        mu=mu_estimate(date)
         columns = df2.columns[1:]
+
+        #for i in range(len(all_dates)):
+        #    if all_dates[i]==date:
+        #        t=i
         rt=0
         for i in range(len(columns)):
             company = df2[columns[i]]
             w_t_i = company[j]
-            sedol=columns[i]
-            r_t_i = perf[str(sedol)][t]
+            r_t_i = mu[i]
             rt+=w_t_i*r_t_i
+        print(rt)
         r[date]=[rt]
 
     return r
@@ -274,8 +291,8 @@ def get_all_indicators2(df2):
 
     return risque
 
-#df_rit = pd.DataFrame(data=get_all_indicators2(df2))
-#df_rit.to_csv("indicators2.csv",sep=';')
+#df_rit = pd.DataFrame(data=get_all_indicators(df2))
+#df_rit.to_csv("indicators3.csv",sep=';')
            
         
         
