@@ -131,7 +131,7 @@ def get_weight(date,volatility):
     sigma=sigma_estimate(date)
     if sigma[0][0]==0:
         return [0 for _ in range(n)],0,0
-    sigma=sigma+0.001*np.identity(n)
+    #sigma=sigma+0.000001*np.identity(n)
     w = cp.Variable(n)
     ret = mu@w 
     risk = cp.quad_form(w, sigma)
