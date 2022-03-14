@@ -3,6 +3,7 @@ np.set_printoptions(precision=3)
 import matplotlib.pyplot as plt
 from numpy.linalg import inv
 import cvxpy as cp
+import pandas as pd
 from copy import deepcopy
 
 
@@ -39,8 +40,7 @@ def get_sigma(rho, volatility):
     return sigma
 
 
-def weight_MVO(volatility=volatility, mu=mu, rho=rho):
-    sigma = get_sigma(rho, volatility)
+def weight_MVO(volatility=volatility, sigma = get_sigma(rho, volatility)):    
     N = np.shape(sigma)[0]
     ones = np.ones((N, 1))
     I = np.eye(N)
@@ -53,8 +53,7 @@ print("weight_MVO")
 print(weight_MVO())
 
 
-def weight_EW(volatility=volatility, mu=mu, rho=rho):
-    sigma = get_sigma(rho, volatility)
+def weight_EW(volatility=volatility, sigma = get_sigma(rho, volatility)):    
     N = np.shape(sigma)[0]
     ones = np.ones((N, 1))
     I = np.eye(N)
@@ -68,8 +67,7 @@ print("weight_EW")
 print(weight_EW())
 
 
-def weight_IV(volatility=volatility, mu=mu, rho=rho):
-    sigma = get_sigma(rho, volatility)
+def weight_IV(volatility=volatility, sigma = get_sigma(rho, volatility)):
     N = np.shape(sigma)[0]
     ones = np.ones((N, 1))
     I = np.eye(N)
@@ -83,8 +81,7 @@ print("weight_IV")
 print(weight_IV())
 
 
-def weight_ERB(volatility=volatility, mu=mu, rho=rho):
-    sigma = get_sigma(rho, volatility)
+def weight_ERB(volatility=volatility, sigma = get_sigma(rho, volatility)):    
     N = np.shape(sigma)[0]
     ones = np.ones((N, 1))
     I = np.eye(N)
@@ -98,8 +95,7 @@ print("weight_ERB")
 print(weight_ERB())
 
 
-def weight_MV(volatility=volatility, mu=mu, rho=rho):
-    sigma = get_sigma(rho, volatility)
+def weight_MV(volatility=volatility, sigma = get_sigma(rho, volatility)):    
     N = np.shape(sigma)[0]
     ones = np.ones((N, 1))
     I = np.eye(N)
@@ -117,15 +113,14 @@ print(weight_MV())
 """a"""
 
 
-def weight_cp(rho, volatility, mu, lambd, kappa, mode="sigma"):
+def weight_cp(sigma, mu, lambd, kappa, mode="sigma"):
     """La fonction ne marche pas car j'ai une erreur : "cvxpy.error.DCPError: Problem does not follow DCP rules. Specifically:
     The objective is not DCP. Its following subexpressions are not:"
 
     La variable mode peut prendre les valeurs sigma, diag, ou identite, en fonction de la valeur qu'on veut pour la matrice omega
     """
 
-    n = len(volatility[0])
-    sigma = get_sigma(rho=rho, volatility=volatility)
+    n = len(sigma[0])
     m = len(sigma)
     omega = deepcopy(sigma)
 
@@ -153,25 +148,97 @@ def weight_cp(rho, volatility, mu, lambd, kappa, mode="sigma"):
 
     prob = cp.Problem(cp.Maximize(ret - kappa * ret2 - lambd / 2 * risk), constraints)
     prob.solve()
-    return w.value
+    return w.value, w, prob, risk, ret, ret2
 
 
+print("-----")
+print("weight_CP")
 print(
     weight_cp(
-        rho=rho, volatility=volatility, mu=mu, lambd=lambd, kappa=kappa, mode="sigma"
-    )
+        sigma=get_sigma(rho=rho, volatility=volatility), mu=mu, lambd=lambd, kappa=kappa, mode="sigma"
+    )[0]
 )
 
 """b"""
-# print(weight_cp(rho=rho, volatility=volatility, mu=mu, lambd=lambd, kappa=10000, mode='sigma'))
+print("-----")
+print("kappa = 10000")
+print(weight_cp(sigma=get_sigma(rho=rho, volatility=volatility), mu=mu, lambd=lambd, kappa=10000, mode='sigma')[0])
 
 
 """Exercice 3"""
 """a"""
-# print(weight_cp(rho=rho, volatility=volatility, mu=mu, lambd=lambd, kappa=kappa, mode='diag'))
-# print(weight_cp(rho=rho, volatility=volatility, mu=mu, lambd=lambd, kappa=kappa, mode='identite'))
+print("-----")
+print("omega diag")
+print(weight_cp(sigma=get_sigma(rho=rho, volatility=volatility), mu=mu, lambd=lambd, kappa=kappa, mode='diag')[0])
+print("-----")
+print("omega identity")
+print(weight_cp(sigma=get_sigma(rho=rho, volatility=volatility), mu=mu, lambd=lambd, kappa=kappa, mode='identite')[0])
 
 
 """b"""
-# print(weight_cp(rho=rho, volatility=volatility, mu=mu, lambd=lambd, kappa=10000, mode='diag'))
-# print(weight_cp(rho=rho, volatility=volatility, mu=mu, lambd=lambd, kappa=10000, mode='identite'))
+print("-----")
+print("omega diag, kappa = 1000")
+print(weight_cp(sigma=get_sigma(rho=rho, volatility=volatility), mu=mu, lambd=lambd, kappa=10000, mode='diag')[0])
+print("-----")
+print("omega identity, kappa = 1000")
+print(weight_cp(sigma=get_sigma(rho=rho, volatility=volatility), mu=mu, lambd=lambd, kappa=10000, mode='identite')[0])
+
+"""Exercice 4"""
+
+perf_list=pd.read_csv('performance.csv',sep=';')
+def mu_estimate(date,perf_list=perf_list):
+    sedol_list=perf_list.keys()[1:]
+    dates=perf_list['Dates']
+    j=0
+    for i in range(len(dates)):
+        if str(dates[i]+' 00:00:00')==str(date):
+            j=i
+    if j>=600:
+        return [np.mean([perf_list[sedol][i] for i in range(j-600,j) ]) for sedol in   sedol_list  ]
+    else:
+        return [0 for _ in range(len(sedol_list))]
+
+print("-----")
+import main
+def sigma_estimate(date):
+    return main.get_cov(date)
+
+def get_weight(date,volatility, weight):
+    mu=mu_estimate(date)
+    n=len(mu)
+    sigma=sigma_estimate(date)
+    if sigma[0][0]==0:
+        return [0 for _ in range(n)],0,0
+            
+    _, w, prob, risk, ret, ret2 = weight(sigma=sigma, mu=mu, lambd=lambd, kappa=kappa, mode='diag')
+    
+    return w.value, prob.value, risk.value, ret.value, ret2.value 
+print("-----")
+path = "DataProjets.xlsx"
+df2 = pd.read_excel(path, sheet_name="MarketCaps")
+df2 = df2.rename(columns={"Unnamed: 0": "date"})
+base=pd.read_csv('indicators.csv',sep=';').T
+base.columns = base.iloc[0]
+base = base.drop(['date'])
+base.index = pd.to_datetime(base.index)
+
+def get_all_weights(df2, weight, base=base):
+    all_dates=df2['date']
+    liste=[]
+    for date in pd.to_datetime(all_dates):
+        print(date)
+        if True:
+            volatility=base.loc[date,'volatility']
+            all_returned = get_weight(date,volatility, weight)
+            print("a")
+            #liste.append([str(date)[0:10],str(perf),str(risk)]+[str(x) for x in w])
+            print(all_returned)
+        else:
+            print('fail')
+    return liste
+
+liste=get_all_weights(df2, lambda sigma, mu : weight_cp(sigma=sigma, mu=mu, lambd=lambd, kappa=kappa, mode='diag'))
+import csv
+with open('outputCP.csv','w',newline="") as result_file:
+    wr = csv.writer(result_file,delimiter=";")
+    wr.writerows(liste)
