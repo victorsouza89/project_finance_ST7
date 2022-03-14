@@ -295,7 +295,7 @@ def get_all_indicators2(df2):
 #df_rit.to_csv("indicators3.csv",sep=';')
 weights=pd.read_csv('indicators.csv',sep=';')
 all_dates=df2['date']
-print(weights)
+#print(weights)
 def get_maximum_drawdown(date,w):
     t=0
     for (i,d) in enumerate(all_dates):
