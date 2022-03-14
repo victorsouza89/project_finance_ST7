@@ -295,7 +295,8 @@ def get_all_indicators2(df2):
 #df_rit.to_csv("indicators3.csv",sep=';')
            
         
-        
+def sector_sorting():
+    
 
 
 '''

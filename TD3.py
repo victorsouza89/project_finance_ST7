@@ -135,7 +135,7 @@ def weight_cp(sigma, mu, lambd, kappa, mode="sigma"):
             omega[i][i] = 1
 
     w = cp.Variable(n)
-    ret = mu.T @ w
+    ret = np.array(mu).T @ w
 
     omegaEigenvalues, omegaEigenvectors = np.linalg.eig(omega)
     omegaD = np.diag(omegaEigenvalues)
@@ -210,7 +210,7 @@ def get_weight(date,volatility, weight):
     if sigma[0][0]==0:
         return [0 for _ in range(n)],0,0
             
-    _, w, prob, risk, ret, ret2 = weight(sigma=sigma, mu=mu, lambd=lambd, kappa=kappa, mode='diag')
+    _, w, prob, risk, ret, ret2 = weight_cp(sigma=sigma, mu=mu, lambd=lambd, kappa=kappa, mode='diag')
     
     return w.value, prob.value, risk.value, ret.value, ret2.value 
 print("-----")
