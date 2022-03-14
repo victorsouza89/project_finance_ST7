@@ -113,7 +113,7 @@ print(weight_MV())
 """a"""
 
 
-def weight_cp(sigma, mu, lambd, kappa, mode="sigma"):
+def weight_cp(sigma, mu, lambd, kappa, vol,mode="sigma"):
     """La fonction ne marche pas car j'ai une erreur : "cvxpy.error.DCPError: Problem does not follow DCP rules. Specifically:
     The objective is not DCP. Its following subexpressions are not:"
 
@@ -144,13 +144,13 @@ def weight_cp(sigma, mu, lambd, kappa, mode="sigma"):
 
     risk = cp.quad_form(w, sigma)
 
-    constraints = [cp.sum(w) == 1, w >= 0]
+    constraints = [cp.sum(w) == 1, w >= 0,risk<=vol]
 
-    prob = cp.Problem(cp.Maximize(ret - kappa * ret2 - lambd / 2 * risk), constraints)
+    prob = cp.Problem(cp.Maximize(ret - kappa * ret2 ), constraints)
     prob.solve()
     return w.value, w, prob, risk, ret, ret2
 
-
+'''
 print("-----")
 print("weight_CP")
 print(
@@ -182,7 +182,7 @@ print(weight_cp(sigma=get_sigma(rho=rho, volatility=volatility), mu=mu, lambd=la
 print("-----")
 print("omega identity, kappa = 1000")
 print(weight_cp(sigma=get_sigma(rho=rho, volatility=volatility), mu=mu, lambd=lambd, kappa=10000, mode='identite')[0])
-
+'''
 """Exercice 4"""
 
 perf_list=pd.read_csv('performance.csv',sep=';')
@@ -208,9 +208,9 @@ def get_weight(date,volatility, weight):
     n=len(mu)
     sigma=sigma_estimate(date)
     if sigma[0][0]==0:
-        return [0 for _ in range(n)],0,0
-            
-    _, w, prob, risk, ret, ret2 = weight_cp(sigma=sigma, mu=mu, lambd=lambd, kappa=kappa, mode='diag')
+        return [0 for _ in range(n)],0,0,0,0
+    sigma=sigma+0.000001*np.identity(n)
+    _, w, prob, risk, ret, ret2 = weight_cp(sigma=sigma, mu=mu, lambd=lambd, kappa=kappa, vol=volatility,mode='diag')
     
     return w.value, prob.value, risk.value, ret.value, ret2.value 
 print("-----")
@@ -229,10 +229,8 @@ def get_all_weights(df2, weight, base=base):
         print(date)
         if True:
             volatility=base.loc[date,'volatility']
-            all_returned = get_weight(date,volatility, weight)
-            print("a")
-            #liste.append([str(date)[0:10],str(perf),str(risk)]+[str(x) for x in w])
-            print(all_returned)
+            w,prob,r,ret,ret2 = get_weight(date,volatility, weight)
+            liste.append([str(date)[0:10],str(ret),str(r)]+[str(x) for x in w])
         else:
             print('fail')
     return liste
