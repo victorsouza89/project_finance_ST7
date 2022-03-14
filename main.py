@@ -293,6 +293,53 @@ def get_all_indicators2(df2):
 
 #df_rit = pd.DataFrame(data=get_all_indicators(df2))
 #df_rit.to_csv("indicators3.csv",sep=';')
+weights=pd.read_csv('indicators.csv',sep=';')
+all_dates=df2['date']
+print(weights)
+def get_maximum_drawdown(date,w):
+    t=0
+    for (i,d) in enumerate(all_dates):
+        if str(d)[0:10]==date:
+            t=i
+    if t<24:
+        return 0
+    
+    min=1
+    max=1
+    current=1
+    for i in range(0,t):
+        perf=weights[str(all_dates[i])[0:10]][w]
+
+        if i<t-24:
+            current=current*(1+perf)
+            min=current
+            max=current
+        else:
+            
+            current=current*(1+perf)
+            #print(current)
+            min=np.min([min,current])
+            max=np.max([max,current])
+    return (max-min)/max
+
+def get_all_maximum_drawdown():
+    l1=[]
+    l2=[]
+    for date in all_dates:
+        l1.append(get_maximum_drawdown(str(date)[0:10],0 ))
+        l2.append(get_maximum_drawdown(str(date)[0:10],4 ))
+        
+        
+    return l1,l2
+'''
+l1,l2=get_all_maximum_drawdown()
+plt.plot(l1)
+plt.plot(l2)
+plt.show()
+'''
+
+
+
            
         
         

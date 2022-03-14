@@ -157,12 +157,13 @@ def get_all_weights(df2,base=base):
             print('fail')
     return liste
 
+'''
 liste=get_all_weights(df2)
 import csv
 with open('output.csv','w',newline="") as result_file:
     wr = csv.writer(result_file,delimiter=";")
     wr.writerows(liste)
-
+'''
 
 
 
