@@ -227,11 +227,12 @@ def get_all_weights(df2, weight, base=base):
     liste=[]
     for date in pd.to_datetime(all_dates):
         print(date)
-        if True:
+        try:
             volatility=base.loc[date,'volatility']
             w,prob,r,ret,ret2 = get_weight(date,volatility, weight)
             liste.append([str(date)[0:10],str(ret),str(r)]+[str(x) for x in w])
-        else:
+            print(r,ret)
+        except:
             print('fail')
     return liste
 
