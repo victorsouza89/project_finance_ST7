@@ -199,27 +199,28 @@ def get_all_rti(N,price_database,df2):
 all_dates=pickle.load( open( "all_dates.p", "rb" ) )
 perf=pd.read_csv('performance.csv',sep=';')
 
-def get_cov(date,all_dates=all_dates,perf=perf):
+
+def get_cov(date,all_dates=all_dates,perf=perf,lg=600):
 
     t=0
     for i in range(len(all_dates)):
         if all_dates[i]==date:
             t=i
-    if t<=30:
+    if t<=lg:
         return [[0]]
 
     columns = df2.columns[1:]
     data=[]
     for i in range(len(columns)):
             sedol=columns[i]
-            liste=perf[str(sedol)][t-30:t]
+            liste=perf[str(sedol)][t-lg:t]
             data.append(liste)
     return(np.cov(data))
 
 
 
 perf_list=pd.read_csv('performance.csv',sep=';')
-def mu_estimate(date,perf_list=perf_list):
+def mu_estimate(date,perf_list=perf_list,lg=600):
 
     sedol_list=perf_list.keys()[1:]
     dates=perf_list['Dates']
@@ -227,8 +228,8 @@ def mu_estimate(date,perf_list=perf_list):
     for i in range(len(dates)):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
-    if j>=600:
-        return [np.mean([perf_list[sedol][i] for i in range(j-600,j) ]) for sedol in   sedol_list  ]
+    if j>=lg:
+        return [np.mean([perf_list[sedol][i] for i in range(j-lg,j) ]) for sedol in   sedol_list  ]
     else:
         return [0 for _ in range(len(sedol_list))]
 
@@ -252,7 +253,7 @@ def get_all_indicators(df2):
     r={}
     for j,date in enumerate(dates):
         #print(date)
-        mu=mu_estimate(date)
+        mu=mu_estimate(date,lg=30)
         columns = df2.columns[1:]
 
         #for i in range(len(all_dates)):
@@ -282,7 +283,7 @@ def get_all_indicators2(df2):
                 t=i
         columns = df2.columns[1:]
         risquet=0
-        covariance=get_cov(date)
+        covariance=get_cov(date,lg=30)
         if covariance[0][0]==0:
             risquet=0
         else:
@@ -294,8 +295,8 @@ def get_all_indicators2(df2):
 
     return risque
 
-df_rit = pd.DataFrame(data=get_all_indicators(df2))
-df_rit.to_csv("indicators2.csv",sep=';')
+df_rit = pd.DataFrame(data=get_all_indicators2(df2))
+df_rit.to_csv("indicators3.csv",sep=';')
 #weights=pd.read_csv('indicators.csv',sep=';')
 #all_dates=df2['date']
 #print(weights)
@@ -345,7 +346,10 @@ plt.show()
 
            
         
-        
+def sector_sorting():
+    company = yf.Ticker("SLUX")
+    sector_sorted = company.info['sector']
+
 
 
 '''
