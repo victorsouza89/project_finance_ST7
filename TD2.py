@@ -112,8 +112,8 @@ def mu_estimate(date,perf_list=perf_list):
     for i in range(len(dates)):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
-    if j>=600:
-        return [np.mean([perf_list[sedol][i] for i in range(j-600,j) ]) for sedol in   sedol_list  ]
+    if j>=30:
+        return [np.mean([perf_list[sedol][i] for i in range(j-30,j) ]) for sedol in   sedol_list  ]
     else:
         return [0 for _ in range(len(sedol_list))]
 

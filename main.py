@@ -198,22 +198,25 @@ def get_all_rti(N,price_database,df2):
     return d
 all_dates=pickle.load( open( "all_dates.p", "rb" ) )
 perf=pd.read_csv('performance.csv',sep=';')
+
 def get_cov(date,all_dates=all_dates,perf=perf):
 
     t=0
     for i in range(len(all_dates)):
         if all_dates[i]==date:
             t=i
-    if t<=600:
+    if t<=30:
         return [[0]]
 
     columns = df2.columns[1:]
     data=[]
     for i in range(len(columns)):
             sedol=columns[i]
-            liste=perf[str(sedol)][t-600:t]
+            liste=perf[str(sedol)][t-30:t]
             data.append(liste)
     return(np.cov(data))
+
+
 
 perf_list=pd.read_csv('performance.csv',sep=';')
 def mu_estimate(date,perf_list=perf_list):
@@ -291,10 +294,10 @@ def get_all_indicators2(df2):
 
     return risque
 
-#df_rit = pd.DataFrame(data=get_all_indicators(df2))
-#df_rit.to_csv("indicators3.csv",sep=';')
-weights=pd.read_csv('indicators.csv',sep=';')
-all_dates=df2['date']
+df_rit = pd.DataFrame(data=get_all_indicators(df2))
+df_rit.to_csv("indicators2.csv",sep=';')
+#weights=pd.read_csv('indicators.csv',sep=';')
+#all_dates=df2['date']
 #print(weights)
 def get_maximum_drawdown(date,w):
     t=0
