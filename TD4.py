@@ -6,6 +6,7 @@ import cvxpy as cp
 import pandas as pd
 from copy import deepcopy
 import main
+import sqrt from math
 
 volatility = np.array([[14.3, 17.4, 21.2, 4.3, 4, 8.4, 0.5]])
 mu = np.array([6, 7, 9.5, 1.5, 1.3, 3.2, 0])
@@ -25,7 +26,23 @@ kappa = 0.2
 
 "Exercice 1"
 
-def weight_cp_mean(sigma, mu, kappa, vol):
+def market_cap(date,n,ent=150):
+    data_cap = main.search_cap(date)
+    daily_data_cap = np.zeros(n)
+    res = np.zeros(1,n)
+    for i in range(n):
+        daily_data_cap[i] = data_cap[i]
+    sorted_data = np.sort(daily_data_cap)
+    boundary = sorted_data[ent]
+
+    for i in range(n):
+        if daily_data_cap[i] <= boundary:
+            res[i] = 1
+    
+    return res
+
+
+def weight_cp_mean(sigma, mu, kappa, date):
 
     n = len(sigma[0])
     m = len(sigma)
@@ -48,17 +65,72 @@ def weight_cp_mean(sigma, mu, kappa, vol):
 
     vol_mean = w.T @ sigma @ w
 
-    constraints = [cp.sum(w) == 1, w >= 0,risk<=vol, vol_mean <= 0.04]
+    better_cap = maket_cap(date,n)
+
+    constraints = [cp.sum(w) == 1, w >= 0,risk<=vol, vol_mean <= 0.04, w @ better_cap = np.zeros(n)]
 
     prob = cp.Problem(cp.Maximize(ret - kappa * ret2 ), constraints)
     prob.solve()
+
     return w.value, w, prob, risk, ret, ret2
 
 
 
-def portfolio_contraint():
-    sigma_mean = main.get_cov(date,all_dates=all_dates,perf=perf)
+def portfolio_contraint(date):
+    sigma_mean = main.get_cov(date)
     mu_mean = np.zeros(len(sigma_mean))
     for i in range(len(sigma_mean)):
         mu_mean[i] = 0.5 * sqrt(sigma_mean[i][i])
-    w_rob,w,prob,risk,ret,ret2 = weight_cp_mean(sigma_mean,mu_mean,0.25,vol)
+    w_rob,w,prob,risk,ret,ret2 = weight_cp_mean(sigma_mean,mu_mean,0.25,date)
+
+
+"""Partie 2 : lambda equivalent""""
+
+def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
+    
+    n = len(sigma[0])
+    m = len(sigma)
+    omega = deepcopy(sigma)
+
+    omega = np.zeros((m, m))
+    for i in range(m):
+        omega[i][i] = sigma[i][i]
+
+
+    one = np.ones(n,1)
+    lambd = - 1 / (one.T @ sigma.inv() @ one)
+
+    w = cp.Variable(n)
+    ret = np.array(mu).T @ w
+
+    omegaEigenvalues, omegaEigenvectors = np.linalg.eig(omega)
+    omegaD = np.diag(omegaEigenvalues)
+
+    ret2 = cp.norm(np.sqrt(omegaD) @ omegaEigenvectors @ w)
+
+    risk = cp.quad_form(w, sigma)
+
+    better_cap = maket_cap(date,n,ent)
+
+    constraints = [cp.sum(w) == 1, w >= 0,risk<=vol, w @ better_cap = np.zeros(n)]
+
+    prob = cp.Problem(cp.Maximize(ret - kappa * ret2  - lambd * w.T @ sigma @ w), constraints)
+    prob.solve()
+
+    return w.value, w, prob, risk, ret, ret2
+
+
+def portfolio_contraint_lambda(date,ent):
+    sigma_mean = main.get_cov(date)
+    mu_mean = np.zeros(len(sigma_mean))
+    for i in range(len(sigma_mean)):
+        mu_mean[i] = 0.5 * sqrt(sigma_mean[i][i])
+    w_rob,w,prob,risk,ret,ret2 = weight_cp_mean_lambda(sigma_mean,mu_mean,0.25,date,ent)
+
+
+
+"""Partie 3 : optimisation pour les 75 et les 300 plus grades capitalisations"""
+
+portfolio_contraint_lambda(date,75)
+portfolio_contraint_lambda(date,300)
+
