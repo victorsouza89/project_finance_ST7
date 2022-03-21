@@ -295,8 +295,8 @@ def get_all_indicators2(df2):
 
     return risque
 
-df_rit = pd.DataFrame(data=get_all_indicators2(df2))
-df_rit.to_csv("indicators3.csv",sep=';')
+#df_rit = pd.DataFrame(data=get_all_indicators2(df2))
+#df_rit.to_csv("indicators3.csv",sep=';')
 #weights=pd.read_csv('indicators.csv',sep=';')
 #all_dates=df2['date']
 #print(weights)
@@ -345,10 +345,58 @@ plt.show()
 
 
            
+df3 = pd.read_excel(path, sheet_name="Sector", index_col=0)
+def sector_sorting(date):
+    sector_sorted=[[] for _ in range(16)]
+    liste=df3.loc[date]
+    for c in liste.index:
+        sector_sorted[int(liste[c])].append(c)
+    return sector_sorted
+
+def mu_estimate_sector(date,companies,perf_list=perf_list,lg=600):
+    dates=perf_list['Dates']
+    j=0
+    for i in range(len(dates)):
+        if str(dates[i]+' 00:00:00')==str(date):
+            j=i
+    if j>=lg:
+        return [np.mean([perf_list[str(sedol)][i] for i in range(j-lg,j) ]) for sedol in   companies  ]
+    else:
+        return [0 for _ in range(len(companies))]
+
+def NormalizeData(data):
+    tot=np.sum(data)
+    return 1/tot*data
+
+def performance_sector(sector):
+    dates=df2["date"]
+    columns = df2.columns[1:]
+    r={}
+    for j,date in enumerate(dates):
+        try:
+            companies_sector=sector_sorting(date)[sector]
+            mu=mu_estimate_sector(date,companies_sector,lg=30)
+            rt=0
         
-def sector_sorting():
-    company = yf.Ticker("SLUX")
-    sector_sorted = company.info['sector']
+            for (i,c) in enumerate(companies_sector):
+                company_weight = NormalizeData(df2[c])
+               
+                w_t_i = company_weight[j]
+                r_t_i = mu[i]
+                rt+=w_t_i*r_t_i
+            print(rt)
+            r[date]=[rt]
+
+        except:
+            print('fail')
+            r[date]=[0]
+        
+    return r
+performance_sector(14)
+
+
+
+
 
 
 
