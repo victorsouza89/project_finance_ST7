@@ -364,6 +364,30 @@ def mu_estimate_sector(date,companies,perf_list=perf_list,lg=600):
     else:
         return [0 for _ in range(len(companies))]
 
+def cov_estimate_sector(date,companies,perf_list=perf_list,lg=600):
+    dates=perf_list['Dates']
+    j=0
+    for i in range(len(dates)):
+        if str(dates[i]+' 00:00:00')==str(date):
+            j=i
+    if j<=lg:
+        return [[0]]
+    columns = df2.columns[1:]
+    data=[]
+    for i in range(len(companies)):
+            sedol=companies[i]
+            liste=perf[str(sedol)][j-lg:j]
+            data.append(liste)
+    return(np.cov(data))
+    
+    
+
+    
+
+    
+   
+
+        
 def NormalizeData(data):
     tot=np.sum(data)
     return 1/tot*data
@@ -392,10 +416,37 @@ def performance_sector(sector):
             r[date]=[0]
         
     return r
-performance_sector(14)
+
+    
 
 
+def risk_sector(sector):
+    dates=df2["date"]
+    columns = df2.columns[1:]
+    risque={}
+    for j,date in enumerate(dates):
+        try:
+            companies_sector=sector_sorting(date)[sector]
+            cov=cov_estimate_sector(date,companies_sector,lg=30)
+            risquet=0
+            if cov[0][0]==0:
+                risquet=0
+            else:
+                for (i1,c1) in enumerate(companies_sector):
+                    w1=NormalizeData(df2[c1])
+                    for (i2,c2) in enumerate(companies_sector):
+                        w2=NormalizeData(df2[c2])
 
+                        risquet+=cov[i1,i2]*w1[j]*w2[j]
+                print(risquet)
+                risque[date]=[risquet]
+        except:
+            risque[date]=[0]
+            print('fail')
+        
+    return risque
+
+risk_sector(4)
 
 
 
