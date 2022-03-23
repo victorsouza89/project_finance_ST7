@@ -7,7 +7,9 @@ import pandas as pd
 from copy import deepcopy
 import main
 from math import sqrt
-
+import pickle 
+all_dates=pickle.load( open( "all_dates.p", "rb" ) )
+perf=pd.read_csv('performance.csv',sep=';')
 volatility = np.array([[14.3, 17.4, 21.2, 4.3, 4, 8.4, 0.5]])
 mu = np.array([6, 7, 9.5, 1.5, 1.3, 3.2, 0])
 rho = np.array(
@@ -28,12 +30,12 @@ kappa = 0.2
 
 def market_cap(date,n,ent=150):
     path = "marketCaps.csv"
-    df = pd.read_csv(path)
-
-    data_cap = df.loc[:,[date]]
+    df = pd.read_csv(path,index_col=0)
+    
+    data_cap = df.loc[date]
 
     daily_data_cap = np.zeros(n)
-    res = np.zeros(1,n)
+    res = np.zeros((1,n))
     for i in range(n):
         daily_data_cap[i] = data_cap[i]
     sorted_data = np.sort(daily_data_cap)
@@ -41,8 +43,8 @@ def market_cap(date,n,ent=150):
 
     for i in range(n):
         if daily_data_cap[i] < boundary:
-            res[i] = 1
-    
+            res[0,i] = 1
+    print(res)
     return res
 
 
@@ -91,9 +93,10 @@ def portfolio_contraint(date):
 """Partie 2 : lambda equivalent"""
 
 def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
-    
+    date=date[0:10]
     n = len(sigma[0])
     m = len(sigma)
+    
 
     omega = np.zeros((m, m))
     for i in range(m):
@@ -101,7 +104,7 @@ def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
 
 
     one = np.ones((n,1))
-    lambd = - 1 / (one.T @ sigma.inv() @ one)
+    lambd = - 1 / (one.T @ inv((sigma+0.000001*np.identity(n))) @ one)
 
     w = cp.Variable(n)
     ret = np.array(mu).T @ w
@@ -123,8 +126,8 @@ def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
 
 
 def portfolio_contraint_lambda(date,ent):
-    date_cov = date + " 00:00:00"
-    sigma_mean = main.get_cov(date_cov)
+    
+    sigma_mean = main.get_cov(date)
     print(sigma_mean)
     if sigma_mean[0][0] == 0:
         print(sigma_mean)
@@ -139,8 +142,8 @@ def portfolio_contraint_lambda(date,ent):
 
 """Partie 3 : optimisation pour les 75 et les 300 plus grades capitalisations"""
 
-print(portfolio_contraint_lambda("2017-05-31",75))
-print(portfolio_contraint_lambda("2017-05-31",300))
+
+print(portfolio_contraint_lambda("2019-05-31 00:00:00",300))
 
 
 w_prime = np.array([[x] for x in w])
