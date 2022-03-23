@@ -19,6 +19,7 @@ df2 = pd.read_excel(path, sheet_name="MarketCaps")
 df2 = df2.rename(columns={"Unnamed: 0": "date"})
 base=pd.read_csv('indicators.csv',sep=';')
 opti_weights=pd.read_csv('weights_opti.csv',sep=';')
+print(opti_weights)
 def get_delta(rho,volatility):
     n=len(volatility[0])
     delta=np.zeros((n,n))
@@ -176,7 +177,7 @@ def performance_sector_opti(sector):
             rt=0
             company_weight=[]
             for c in companies_sector:
-                company_weight.append(d[c][j])
+                company_weight.append(opti_weights[c][j])
             for (i,c) in enumerate(companies_sector):
                
                 w_t_i = company_weight[j]
