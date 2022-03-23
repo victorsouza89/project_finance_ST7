@@ -431,6 +431,7 @@ def risk_sector(sector):
             risquet=0
             if cov[0][0]==0:
                 risquet=0
+                print(0)
             else:
                 for (i1,c1) in enumerate(companies_sector):
                     w1=NormalizeData(df2[c1])
