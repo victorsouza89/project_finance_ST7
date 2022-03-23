@@ -50,7 +50,6 @@ def weight_cp_mean(sigma, mu, kappa, date):
 
     n = len(sigma[0])
     m = len(sigma)
-    omega = deepcopy(sigma)
 
     omega = np.zeros((m, m))
     for i in range(m):
@@ -67,7 +66,7 @@ def weight_cp_mean(sigma, mu, kappa, date):
 
     vol_mean = w.T @ sigma @ w
 
-    better_cap = maket_cap(date,n,ent)
+    better_cap = market_cap(date,n,ent)
     cap_constraint = np.diag(w @ better_cap)
 
     constraints = [cp.sum(w) == 1, w >= 0, vol_mean <= 0.04, cap_constraint == np.zeros(n,n)]
@@ -80,7 +79,8 @@ def weight_cp_mean(sigma, mu, kappa, date):
 
 
 def portfolio_contraint(date):
-    sigma_mean = main.get_cov(date)
+    date_cov = date + " 00:00:00"
+    sigma_mean = main.get_cov(date_cov)
     mu_mean = np.zeros(len(sigma_mean))
     for i in range(len(sigma_mean)):
         mu_mean[i] = 0.5 * sqrt(sigma_mean[i][i])
@@ -94,7 +94,6 @@ def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
     
     n = len(sigma[0])
     m = len(sigma)
-    omega = deepcopy(sigma)
 
     omega = np.zeros((m, m))
     for i in range(m):
@@ -112,7 +111,7 @@ def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
 
     ret2 = cp.norm(np.sqrt(omegaD) @ omegaEigenvectors @ w)
 
-    better_cap = maket_cap(date,n,ent)
+    better_cap = market_cap(date,n,ent)
     cap_constraint = np.diag(w @ better_cap)
 
     constraints = [cp.sum(w) == 1, w >= 0, cap_constraint == np.zeros(n)]
@@ -124,8 +123,11 @@ def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
 
 
 def portfolio_contraint_lambda(date,ent):
-    sigma_mean = main.get_cov(date)
+    date_cov = date + " 00:00:00"
+    sigma_mean = main.get_cov(date_cov)
+    print(sigma_mean)
     if sigma_mean[0][0] == 0:
+        print(sigma_mean)
         return 0,0,0,0
     mu_mean = np.zeros(len(sigma_mean))
     for i in range(len(sigma_mean)):
@@ -140,3 +142,5 @@ def portfolio_contraint_lambda(date,ent):
 print(portfolio_contraint_lambda("2017-05-31",75))
 print(portfolio_contraint_lambda("2017-05-31",300))
 
+
+w_prime = np.array([[x] for x in w])

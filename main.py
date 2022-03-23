@@ -204,8 +204,9 @@ def get_cov(date,all_dates=all_dates,perf=perf,lg=600):
 
     t=0
     for i in range(len(all_dates)):
-        if all_dates[i]==date:
+        if str(all_dates[i])==date:
             t=i
+            print(t)
     if t<=lg:
         return [[0]]
 
