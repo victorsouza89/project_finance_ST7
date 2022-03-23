@@ -446,7 +446,7 @@ def risk_sector(sector):
         
     return risque
 
-risk_sector(4)
+#risk_sector(4)
 
 
 
