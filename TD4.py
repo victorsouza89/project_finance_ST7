@@ -30,12 +30,12 @@ kappa = 0.2
 
 def market_cap(date,n,ent=150):
     path = "marketCaps.csv"
-    df = pd.read_csv(path)
-
-    data_cap = df.loc[:,[date]]
+    df = pd.read_csv(path,index_col=0)
+    
+    data_cap = df.loc[date]
 
     daily_data_cap = np.zeros(n)
-    res = np.zeros(1,n)
+    res = np.zeros((1,n))
     for i in range(n):
         daily_data_cap[i] = data_cap[i]
     sorted_data = np.sort(daily_data_cap)
@@ -43,8 +43,8 @@ def market_cap(date,n,ent=150):
 
     for i in range(n):
         if daily_data_cap[i] < boundary:
-            res[i] = 1
-    
+            res[0,i] = 1
+    print(res)
     return res
 
 
@@ -93,10 +93,10 @@ def portfolio_contraint(date):
 """Partie 2 : lambda equivalent"""
 
 def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
-    
+    date=date[0:10]
     n = len(sigma[0])
     m = len(sigma)
-    omega = deepcopy(sigma)
+    
 
     omega = np.zeros((m, m))
     for i in range(m):
@@ -104,7 +104,7 @@ def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
 
 
     one = np.ones((n,1))
-    lambd = - 1 / (one.T @ sigma.inv() @ one)
+    lambd = - 1 / (one.T @ inv((sigma+0.000001*np.identity(n))) @ one)
 
     w = cp.Variable(n)
     ret = np.array(mu).T @ w
@@ -114,8 +114,9 @@ def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
 
     ret2 = cp.norm(np.sqrt(omegaD) @ omegaEigenvectors @ w)
 
-    better_cap = maket_cap(date,n,ent)
-    cap_constraint = np.diag(w @ better_cap)
+    better_cap = market_cap(date,n,ent)
+   
+    cap_constraint = w @ better_cap
 
     constraints = [cp.sum(w) == 1, w >= 0, cap_constraint == np.zeros(n)]
 
@@ -128,6 +129,7 @@ def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
 def portfolio_contraint_lambda(date,ent):
     
     sigma_mean = main.get_cov(date)
+    print(sigma_mean)
     if sigma_mean[0][0] == 0:
         return 0,0,0,0
     mu_mean = np.zeros(len(sigma_mean))
@@ -141,5 +143,5 @@ def portfolio_contraint_lambda(date,ent):
 """Partie 3 : optimisation pour les 75 et les 300 plus grades capitalisations"""
 
 
-print(portfolio_contraint_lambda("2019-08-22 00:00:00",300))
+print(portfolio_contraint_lambda("2019-05-31 00:00:00",300))
 
