@@ -204,17 +204,8 @@ def get_cov(date,all_dates=all_dates,perf=perf,lg=300):
 
     t=0
     for i in range(len(all_dates)):
-<<<<<<< HEAD
-        if str(all_dates[i])==date:
-            t=i
-            print(t)
-=======
-        
         if all_dates[i]==date:
-            
             t=i
-    
->>>>>>> bbb149a0cd4e4ecc2d890617f095f157ed4e3194
     if t<=lg:
         return [[0]]
 
@@ -464,7 +455,7 @@ def risk_sector(sector):
         
     return risque
 
-performance_sector(14)
+#performance_sector(14)
 
 
 
