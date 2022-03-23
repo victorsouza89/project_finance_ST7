@@ -7,7 +7,9 @@ import pandas as pd
 from copy import deepcopy
 import main
 from math import sqrt
-
+import pickle 
+all_dates=pickle.load( open( "all_dates.p", "rb" ) )
+perf=pd.read_csv('performance.csv',sep=';')
 volatility = np.array([[14.3, 17.4, 21.2, 4.3, 4, 8.4, 0.5]])
 mu = np.array([6, 7, 9.5, 1.5, 1.3, 3.2, 0])
 rho = np.array(
@@ -124,6 +126,7 @@ def weight_cp_mean_lambda(sigma, mu, kappa, date,ent=150):
 
 
 def portfolio_contraint_lambda(date,ent):
+    
     sigma_mean = main.get_cov(date)
     if sigma_mean[0][0] == 0:
         return 0,0,0,0
@@ -137,6 +140,6 @@ def portfolio_contraint_lambda(date,ent):
 
 """Partie 3 : optimisation pour les 75 et les 300 plus grades capitalisations"""
 
-print(portfolio_contraint_lambda("2017-05-31",75))
-print(portfolio_contraint_lambda("2017-05-31",300))
+
+print(portfolio_contraint_lambda("2019-08-22 00:00:00",300))
 
