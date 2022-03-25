@@ -193,7 +193,8 @@ def mu_estimate(date,perf_list=perf_list):
     for i in range(len(dates)):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
-    if j>=600:
+    if j>=300:
+        return [main.moyenne([perf_list[sedol][i] for i in range(j-300,j) ]) for sedol in   sedol_list  ]
         return [np.mean([perf_list[sedol][i] for i in range(j-600,j) ]) for sedol in   sedol_list  ]
     else:
         return [0 for _ in range(len(sedol_list))]
@@ -227,12 +228,12 @@ def get_all_weights(df2, weight, base=base):
     liste=[]
     for date in pd.to_datetime(all_dates):
         print(date)
-        try:
-            volatility=base.loc[date,'volatility']
+        if True:
+            volatility=base.loc[date,'daily volatility (variance)']
             w,prob,r,ret,ret2 = get_weight(date,volatility, weight)
             liste.append([str(date)[0:10],str(ret),str(r)]+[str(x) for x in w])
             print(r,ret)
-        except:
+        else:
             print('fail')
     return liste
 

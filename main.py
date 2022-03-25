@@ -218,6 +218,11 @@ def get_cov(date,all_dates=all_dates,perf=perf,lg=300):
     return(np.cov(data))
 
 
+def moyenne(liste):
+    a=1
+    for x in liste:
+        a=a*(1+x)
+    return a**(1/len(liste))-1
 
 perf_list=pd.read_csv('performance.csv',sep=';')
 def mu_estimate(date,perf_list=perf_list,lg=600):
@@ -229,6 +234,7 @@ def mu_estimate(date,perf_list=perf_list,lg=600):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
     if j>=lg:
+        return [moyenne([perf_list[sedol][i] for i in range(j-lg,j) ]) for sedol in   sedol_list  ]
         return [np.mean([perf_list[sedol][i] for i in range(j-lg,j) ]) for sedol in   sedol_list  ]
     else:
         return [0 for _ in range(len(sedol_list))]
@@ -360,6 +366,7 @@ def mu_estimate_sector(date,companies,perf_list=perf_list,lg=600):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
     if j>=lg:
+        return [moyenne([perf_list[str(sedol)][i] for i in range(j-lg,j) ]) for sedol in   companies  ]
         return [np.mean([perf_list[str(sedol)][i] for i in range(j-lg,j) ]) for sedol in   companies  ]
     else:
         return [0 for _ in range(len(companies))]
@@ -389,9 +396,7 @@ def cov_estimate_sector(date,companies,perf_list=perf_list,lg=600):
 
         
 def NormalizeData(data):
-    
     tot=np.sum(data)
-    
     return [1/tot*x for x in data]
 
 def performance_sector(sector):
@@ -435,18 +440,24 @@ def risk_sector(sector):
     for j,date in enumerate(dates):
         try:
             companies_sector=sector_sorting(date)[sector]
-            cov=cov_estimate_sector(date,companies_sector,lg=300)
+            cov=cov_estimate_sector(date,companies_sector,lg=30)
             risquet=0
             if cov[0][0]==0:
                 risquet=0
                 print(0)
             else:
-                for (i1,c1) in enumerate(companies_sector):
-                    w1=NormalizeData(df2[c1])
-                    for (i2,c2) in enumerate(companies_sector):
-                        w2=NormalizeData(df2[c2])
+                company_weight=[]
+                for c in companies_sector:
+                    company_weight.append(df2[c][j])
+                
 
-                        risquet+=cov[i1,i2]*w1[j]*w2[j]
+
+                company_weight=NormalizeData(company_weight)
+                for (i1,c1) in enumerate(companies_sector):
+                    for (i2,c2) in enumerate(companies_sector):
+                      
+
+                        risquet+=cov[i1,i2]*company_weight[i1]*company_weight[i2]
                 print(risquet)
                 risque[date]=[risquet]
         except:
@@ -455,7 +466,6 @@ def risk_sector(sector):
         
     return risque
 
-#performance_sector(14)
 
 
 
