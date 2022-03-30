@@ -200,15 +200,12 @@ all_dates=pickle.load( open( "all_dates.p", "rb" ) )
 perf=pd.read_csv('performance.csv',sep=';')
 
 
-def get_cov(date,all_dates=all_dates,perf=perf,lg=600):
+def get_cov(date,all_dates=all_dates,perf=perf,lg=300):
 
     t=0
     for i in range(len(all_dates)):
-        
-        if str(all_dates[i])==date:
-            
+        if all_dates[i]==date:
             t=i
-    
     if t<=lg:
         return [[0]]
 
@@ -221,6 +218,11 @@ def get_cov(date,all_dates=all_dates,perf=perf,lg=600):
     return(np.cov(data))
 
 
+def moyenne(liste):
+    a=1
+    for x in liste:
+        a=a*(1+x)
+    return a**(1/len(liste))-1
 
 perf_list=pd.read_csv('performance.csv',sep=';')
 def mu_estimate(date,perf_list=perf_list,lg=600):
@@ -232,6 +234,7 @@ def mu_estimate(date,perf_list=perf_list,lg=600):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
     if j>=lg:
+        return [moyenne([perf_list[sedol][i] for i in range(j-lg,j) ]) for sedol in   sedol_list  ]
         return [np.mean([perf_list[sedol][i] for i in range(j-lg,j) ]) for sedol in   sedol_list  ]
     else:
         return [0 for _ in range(len(sedol_list))]
@@ -363,6 +366,7 @@ def mu_estimate_sector(date,companies,perf_list=perf_list,lg=600):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
     if j>=lg:
+        return [moyenne([perf_list[str(sedol)][i] for i in range(j-lg,j) ]) for sedol in   companies  ]
         return [np.mean([perf_list[str(sedol)][i] for i in range(j-lg,j) ]) for sedol in   companies  ]
     else:
         return [0 for _ in range(len(companies))]
@@ -393,7 +397,7 @@ def cov_estimate_sector(date,companies,perf_list=perf_list,lg=600):
         
 def NormalizeData(data):
     tot=np.sum(data)
-    return 1/tot*data
+    return [1/tot*x for x in data]
 
 def performance_sector(sector):
     dates=df2["date"]
@@ -404,11 +408,14 @@ def performance_sector(sector):
             companies_sector=sector_sorting(date)[sector]
             mu=mu_estimate_sector(date,companies_sector,lg=30)
             rt=0
-        
+            company_weight=[]
+            for c in companies_sector:
+                company_weight.append(df2[c][j])
+            company_weight=NormalizeData(company_weight)
+            
             for (i,c) in enumerate(companies_sector):
-                company_weight = NormalizeData(df2[c])
                
-                w_t_i = company_weight[j]
+                w_t_i = company_weight[i]
                 r_t_i = mu[i]
                 rt+=w_t_i*r_t_i
             print(rt)
@@ -419,9 +426,12 @@ def performance_sector(sector):
             r[date]=[0]
         
     return r
-
-    
-
+'''
+sector=[4,5,6,7,8,9,10,11,14]
+for s in sector:
+    print(s)
+    performance_sector(s)
+'''
 
 def risk_sector(sector):
     dates=df2["date"]
@@ -436,12 +446,18 @@ def risk_sector(sector):
                 risquet=0
                 print(0)
             else:
-                for (i1,c1) in enumerate(companies_sector):
-                    w1=NormalizeData(df2[c1])
-                    for (i2,c2) in enumerate(companies_sector):
-                        w2=NormalizeData(df2[c2])
+                company_weight=[]
+                for c in companies_sector:
+                    company_weight.append(df2[c][j])
+                
 
-                        risquet+=cov[i1,i2]*w1[j]*w2[j]
+
+                company_weight=NormalizeData(company_weight)
+                for (i1,c1) in enumerate(companies_sector):
+                    for (i2,c2) in enumerate(companies_sector):
+                      
+
+                        risquet+=cov[i1,i2]*company_weight[i1]*company_weight[i2]
                 print(risquet)
                 risque[date]=[risquet]
         except:
@@ -450,7 +466,6 @@ def risk_sector(sector):
         
     return risque
 
-#risk_sector(4)
 
 
 

@@ -18,7 +18,8 @@ path = "DataProjets.xlsx"
 df2 = pd.read_excel(path, sheet_name="MarketCaps")
 df2 = df2.rename(columns={"Unnamed: 0": "date"})
 base=pd.read_csv('indicators.csv',sep=';')
-
+opti_weights=pd.read_csv('weights_opti.csv',sep=';')
+#print(opti_weights)
 def get_delta(rho,volatility):
     n=len(volatility[0])
     delta=np.zeros((n,n))
@@ -41,7 +42,7 @@ def get_volatility(weight,rho):
 def get_return(weight,mu):
     v=0
     return (mu@weight.T)[0,0]
-
+'''
 w=weight()
 print("weight")
 print(w)  
@@ -50,6 +51,7 @@ print(get_volatility(w,rho))
 print("return")
 print(get_return(w,mu))
 'c'
+'''
 delta=[]
 def weight_cp(volatily=volatility,mu=mu,delta=delta,gamma=0.5):
     n=len(volatility[0])
@@ -114,15 +116,17 @@ def mu_estimate(date,perf_list=perf_list):
     for i in range(len(dates)):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
-    if j>=30:
-        return [np.mean([perf_list[sedol][i] for i in range(j-30,j) ]) for sedol in   sedol_list  ]
+    
+    if j>=300:
+        return [main.moyenne([perf_list[sedol][i] for i in range(j-300,j) ]) for sedol in   sedol_list  ]
+        return [np.mean([perf_list[sedol][i] for i in range(j-300,j) ]) for sedol in   sedol_list  ]
     else:
         return [0 for _ in range(len(sedol_list))]
 
 
 
 def sigma_estimate(date):
-    return main.get_cov(date)
+    return main.get_cov(date,lg=300)
 
 #a=sigma_estimate('2021-10-31')
 #np.savetxt('test.csv', a, delimiter=';') 
@@ -159,17 +163,75 @@ def get_all_weights(df2,base=base):
             print('fail')
     return liste
 
-'''
+"""
 liste=get_all_weights(df2)
 import csv
 with open('output.csv','w',newline="") as result_file:
     wr = csv.writer(result_file,delimiter=";")
     wr.writerows(liste)
-'''
+"""
 
+def performance_sector_opti(sector):
+    dates=df2["date"]
+    columns = df2.columns[1:]
+    r={}
+    for j,date in enumerate(dates):
+        try:
+            companies_sector=main.sector_sorting(date)[sector]
+            mu=main.mu_estimate_sector(date,companies_sector,lg=300)
+            rt=0
+            company_weight=[]
+            for c in companies_sector:
+                company_weight.append(opti_weights[str(c)][j])
+            company_weight=main.NormalizeData(company_weight)
+            for (i,c) in enumerate(companies_sector):
+               
+                w_t_i = company_weight[i]
+                r_t_i = mu[i]
+                rt+=w_t_i*r_t_i
+            print(rt)
+            r[date]=[rt]
 
+        except:
+            print('fail')
+            r[date]=[0]
+        
+    return r
 
+print('9')
+performance_sector_opti(9)
+print('10')
+performance_sector_opti(10)
+print('11')
+performance_sector_opti(11)
+print('14')
+performance_sector_opti(14)
 
+def risk_sector_opti(sector):
+    dates=df2["date"]
+    columns = df2.columns[1:]
+    risque={}
+    for j,date in enumerate(dates):
+        try:
+            companies_sector=main.sector_sorting(date)[sector]
+            cov=main.cov_estimate_sector(date,companies_sector,lg=300)
+            risquet=0
+            if cov[0][0]==0:
+                risquet=0
+                print(0)
+            else:
+                for (i1,c1) in enumerate(companies_sector):
+                    w1=NormalizeData(df2[c1])
+                    for (i2,c2) in enumerate(companies_sector):
+                        w2=NormalizeData(df2[c2])
 
+                        risquet+=cov[i1,i2]*w1[j]*w2[j]
+                print(risquet)
+                risque[date]=[risquet]
+        except:
+            risque[date]=[0]
+            print('fail')
+        
+    return risque
 
 

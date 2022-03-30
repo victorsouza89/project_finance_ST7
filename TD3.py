@@ -72,8 +72,9 @@ def weight_IV(volatility=volatility, sigma = get_sigma(rho, volatility)):
     ones = np.ones((N, 1))
     I = np.eye(N)
     inv_sigma = inv(sigma)
-    Lambda = sigma.diagonal()
-    return (Lambda ** 2) / ones.T.dot((Lambda ** -2))
+    Lambda = np.diag(sigma.diagonal())
+    inv_lambda2 = inv(Lambda**2)
+    return (inv_lambda2.dot(ones)/ones.T.dot(inv_lambda2.dot(ones))).T
 
 
 print("-----")
@@ -86,8 +87,9 @@ def weight_ERB(volatility=volatility, sigma = get_sigma(rho, volatility)):
     ones = np.ones((N, 1))
     I = np.eye(N)
     inv_sigma = inv(sigma)
-    Lambda = sigma.diagonal()
-    return (Lambda) / ones.T.dot((Lambda ** -1))
+    Lambda = np.diag(sigma.diagonal())
+    inv_lambda = inv(Lambda)
+    return (inv_lambda.dot(ones)/ones.T.dot(inv_lambda.dot(ones))).T
 
 
 print("-----")
@@ -193,7 +195,8 @@ def mu_estimate(date,perf_list=perf_list):
     for i in range(len(dates)):
         if str(dates[i]+' 00:00:00')==str(date):
             j=i
-    if j>=600:
+    if j>=300:
+        return [main.moyenne([perf_list[sedol][i] for i in range(j-300,j) ]) for sedol in   sedol_list  ]
         return [np.mean([perf_list[sedol][i] for i in range(j-600,j) ]) for sedol in   sedol_list  ]
     else:
         return [0 for _ in range(len(sedol_list))]
@@ -227,12 +230,12 @@ def get_all_weights(df2, weight, base=base):
     liste=[]
     for date in pd.to_datetime(all_dates):
         print(date)
-        try:
-            volatility=base.loc[date,'volatility']
+        if True:
+            volatility=base.loc[date,'daily volatility (variance)']
             w,prob,r,ret,ret2 = get_weight(date,volatility, weight)
             liste.append([str(date)[0:10],str(ret),str(r)]+[str(x) for x in w])
             print(r,ret)
-        except:
+        else:
             print('fail')
     return liste
 
