@@ -411,9 +411,6 @@ def performance_sector(sector):
             company_weight=[]
             for c in companies_sector:
                 company_weight.append(df2[c][j])
-                
-
-
             company_weight=NormalizeData(company_weight)
             
             for (i,c) in enumerate(companies_sector):
@@ -430,7 +427,10 @@ def performance_sector(sector):
         
     return r
 
-    
+sector=[4,5,6,7,8,9,10,11,14]
+for s in sector:
+    print(s)
+    performance_sector(s)
 
 
 def risk_sector(sector):
