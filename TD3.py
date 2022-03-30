@@ -72,8 +72,9 @@ def weight_IV(volatility=volatility, sigma = get_sigma(rho, volatility)):
     ones = np.ones((N, 1))
     I = np.eye(N)
     inv_sigma = inv(sigma)
-    Lambda = sigma.diagonal()
-    return (Lambda ** 2) / ones.T.dot((Lambda ** -2))
+    Lambda = np.diag(sigma.diagonal())
+    inv_lambda2 = inv(Lambda**2)
+    return (inv_lambda2.dot(ones)/ones.T.dot(inv_lambda2.dot(ones))).T
 
 
 print("-----")
@@ -86,8 +87,9 @@ def weight_ERB(volatility=volatility, sigma = get_sigma(rho, volatility)):
     ones = np.ones((N, 1))
     I = np.eye(N)
     inv_sigma = inv(sigma)
-    Lambda = sigma.diagonal()
-    return (Lambda) / ones.T.dot((Lambda ** -1))
+    Lambda = np.diag(sigma.diagonal())
+    inv_lambda = inv(Lambda)
+    return (inv_lambda.dot(ones)/ones.T.dot(inv_lambda.dot(ones))).T
 
 
 print("-----")

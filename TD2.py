@@ -58,7 +58,9 @@ def weight_cp(volatily=volatility,mu=mu,delta=delta,gamma=0.5):
     delta=get_delta(rho,volatility)
     w = cp.Variable(n)
     ret = mu@w 
+    print(ret.shape)
     risk = cp.quad_form(w, delta)
+    print(risk.shape)
     prob = cp.Problem(cp.Maximize(ret - gamma*risk))
     prob.solve()
     return w.value
