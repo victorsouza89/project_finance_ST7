@@ -35,9 +35,10 @@ kappa = 0.2
 
 def market_cap(date,n,ent=150):
     path = "marketCaps.csv"
-    df = pd.read_csv(path,index_col=0)
+    df = pd.read_csv(path,index_col=0,sep=';')
+    print(date)
 
-    data_cap = df.loc[date]
+    data_cap = df.loc[str(date)]
 
     daily_data_cap = np.zeros(n)
     res = np.zeros((n,n))
@@ -70,6 +71,7 @@ def weight_cp_mean(sigma, mu, kappa, date, ent):
     omegaD = np.diag(omegaEigenvalues)
 
     ret2 = cp.norm(np.sqrt(omegaD) @ omegaEigenvectors @ w)
+
 
     vol_mean = cp.quad_form(w,sigma)
 
@@ -111,8 +113,11 @@ def weight_cp_mean_lambda(w_opti, sigma, mu, kappa, date,ent=150):
     for i in range(m):
         omega[i][i] = sigma[i][i]
 
-    lambd = (np.array(w_opti).T @ sigma @ np.array(w_opti))**(-1) * (np.array(mu).T @ np.array(w_opti) - kappa * sqrt(np.array(w_opti).T @ omega @ np.array(w_opti)))
-
+    try:
+        lambd = (np.array(w_opti).T @ sigma @ np.array(w_opti))**(-1) * (np.array(mu).T @ np.array(w_opti) - kappa * sqrt(np.array(w_opti).T @ omega @ np.array(w_opti)))
+    except:
+        #prendre l'ancien lambda
+    
     w = cp.Variable(n)
     ret = np.array(mu).T @ w
 
@@ -124,10 +129,12 @@ def weight_cp_mean_lambda(w_opti, sigma, mu, kappa, date,ent=150):
     ret3 = cp.quad_form(w,sigma)
 
 
+    vol_mean = cp.quad_form(w,sigma)
+
     better_cap = market_cap(date,n,ent)
     constraints_cap = w @ better_cap
 
-    constraints = [cp.sum(w) == 1, w >= 0, sum(constraints_cap) == 0]
+    constraints = [cp.sum(w) == 1, w >= 0, sum(constraints_cap) == 0, vol_mean <= 0.04/365]
 
 
     prob = cp.Problem(cp.Maximize(ret - kappa * ret2 - lambd * ret3), constraints)
@@ -136,12 +143,13 @@ def weight_cp_mean_lambda(w_opti, sigma, mu, kappa, date,ent=150):
     return w.value, w, prob, ret, ret2, ret3
 
 
-def portfolio_contraint_lambda(date,ent,w_opti):
-    
+def portfolio_contraint_lambda(date,ent,w_opti,ret):
     sigma_mean = main.get_cov(date)
     if sigma_mean[0][0] == 0:
         print(sigma_mean)
-        return 0,0,0,0,0,0
+        return w_opti,0,0,ret,0,0
+    n = len(sigma_mean[0])
+    sigma_mean = sigma_mean + 0.000001 * np.identity(n)
     mu_mean = np.zeros(len(sigma_mean))
     for i in range(len(sigma_mean)):
         mu_mean[i] = 0.5 * sqrt(sigma_mean[i][i])
@@ -157,17 +165,15 @@ def portfolio_contraint_lambda(date,ent,w_opti):
 
 """Determination des donnees sur toute la periode"""
 w_opti,w,prob,ret,ret2 = portfolio_contraint(str(all_dates[30]),150)
+
 portfolio_over_time = []
 portfolio_return = [ret]
 
 for x in all_dates[31:]:
-    try:
-        a,b,c,d,e,f = portfolio_contraint_lambda(str(x),150,w_opti)
-        w_opti,ret = a,d
-    except:
-        pass
-    portfolio_over_time.append(w_opti)
+    w_rob,w,prob,ret,ret2,ret3 = portfolio_contraint_lambda(str(x),150,w_opti,ret)
+    portfolio_over_time.append(w_rob)
     portfolio_return.append(ret)
+    w_opti = w_rob
 
 
 plt.plot(all_dates[30:],portfolio_return)
