@@ -426,12 +426,12 @@ def performance_sector(sector):
             r[date]=[0]
         
     return r
-
+'''
 sector=[4,5,6,7,8,9,10,11,14]
 for s in sector:
     print(s)
     performance_sector(s)
-
+'''
 
 def risk_sector(sector):
     dates=df2["date"]
