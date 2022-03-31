@@ -185,8 +185,8 @@ def portfolio_construction(ent):
     return portfolio_over_time,portfolio_return,portfolio_risk
 
 
-portfolio_small,portfolio_medium,portfolio_large = [portfolio_construction(75),portfolio_construction(150),portfolio_construction(300)]
-
+#portfolio_small,portfolio_medium,portfolio_large = [portfolio_construction(75),portfolio_construction(150),portfolio_construction(300)]
+portfolio_large=portfolio_construction(300)
 
 def get_all_portfolios(portfolio):
     liste=[]
@@ -195,12 +195,14 @@ def get_all_portfolios(portfolio):
         date = all_dates[30 + i]
         print(date)
         w,ret,risk = portfolio_w[i],portfolio_ret[i],portfolio_risk[i]
+        print(ret,risk)
         try:
             liste.append([str(date)[0:10],str(ret),str(risk)]+[str(x) for x in w])
         except:
             pass
     return liste
-
+import csv
+'''
 import csv
 with open('softConstraintsOptiSmall.csv','w',newline="") as result_file:
     wr = csv.writer(result_file,delimiter=";")
@@ -209,6 +211,7 @@ with open('softConstraintsOptiSmall.csv','w',newline="") as result_file:
 with open('softConstraintsOptiMedium.csv','w',newline="") as result_file:
     wr = csv.writer(result_file,delimiter=";")
     wr.writerows(get_all_portfolios(portfolio_medium))
+'''
 
 with open('softConstraintsOptiLarge.csv','w',newline="") as result_file:
     wr = csv.writer(result_file,delimiter=";")
