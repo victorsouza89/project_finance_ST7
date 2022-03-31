@@ -8,7 +8,6 @@ from copy import deepcopy
 import main
 from math import sqrt
 import pickle 
-import matplotlib.pyplot as plt
 
 path = "DataProjets.xlsx"
 df2 = pd.read_excel(path, sheet_name="MarketCaps")
@@ -31,9 +30,17 @@ rho = np.array(
 kappa = 0.2
 
 
-"Exercice 1"
+"Exercice 2"
 
-def market_cap(date,n,ent=150):
+def get_mu(sigma):
+    mu = np.array(len(sigma[0]))
+    for j in range(len(sigma[0])):
+        for i in range(len(sigma)):
+            mu[j] += 1/(len(sigma)) * sigma[i][j]
+    return mu
+
+
+def market_cap(date,n,ent=10):
     path = "marketCaps.csv"
     df = pd.read_csv(path,index_col=0,sep=';')
     print(date)
@@ -53,7 +60,7 @@ def market_cap(date,n,ent=150):
     return res
 
 
-def weight_cp_mean(sigma, mu, kappa, date, ent):
+def weight_cp_mean_tc(sigma, mu, kappa, date, ent):
     date=date[0:10]
 
     n = len(sigma[0])
@@ -87,22 +94,20 @@ def weight_cp_mean(sigma, mu, kappa, date, ent):
 
 
 
-def portfolio_contraint(date,ent):
+def portfolio_contraint_tc(date,ent):
     sigma_mean = main.get_cov(date)
     if sigma_mean[0][0] == 0:
         print(sigma_mean)
         return 0,0,0,0,0
-    mu_mean = np.zeros(len(sigma_mean))
-    for i in range(len(sigma_mean)):
-        mu_mean[i] = 0.5 * sqrt(sigma_mean[i][i])
-    w_rob,w,prob,ret,ret2,vol_mean = weight_cp_mean(sigma_mean,mu_mean,0.25,date,ent)
+    mu_mean = get_mu(sigma_mean)
+    w_rob,w,prob,ret,ret2,vol_mean = weight_cp_mean_tc(sigma_mean,mu_mean,0.5,date,ent)
     return w_rob,w,prob,ret,ret2, vol_mean
 
 
 
 """Partie 2 : lambda equivalent a detendre"""
 
-def weight_cp_mean_lambda(w_opti, sigma, mu, kappa, date, lambd_opti, ent=150):
+def weight_cp_mean_tc(w_opti, sigma, mu, kappa, date, psi=0.02, ent=10):
     date=date[0:10]
 
     n = len(sigma[0])
@@ -114,12 +119,6 @@ def weight_cp_mean_lambda(w_opti, sigma, mu, kappa, date, lambd_opti, ent=150):
         omega[i][i] = sigma[i][i]
 
 
-    try:
-        lambd = (np.array(w_opti).T @ sigma @ np.array(w_opti))**(-1) * (np.array(mu).T @ np.array(w_opti) - kappa * sqrt(np.array(w_opti).T @ omega @ np.array(w_opti)))
-    except:
-        lambd = lambd_opti
-    
-
     w = cp.Variable(n)
     ret = np.array(mu).T @ w
 
@@ -128,7 +127,7 @@ def weight_cp_mean_lambda(w_opti, sigma, mu, kappa, date, lambd_opti, ent=150):
 
     ret2 = cp.norm(np.sqrt(omegaD) @ omegaEigenvectors @ w)
 
-    ret3 = cp.quad_form(w,sigma)
+    ret3 = cp.norm(w - w_opti)
 
 
     vol_mean = cp.quad_form(w,sigma)
@@ -139,44 +138,41 @@ def weight_cp_mean_lambda(w_opti, sigma, mu, kappa, date, lambd_opti, ent=150):
     constraints = [cp.sum(w) == 1, w >= 0, sum(constraints_cap) == 0, vol_mean <= 0.04/365]
 
 
-    prob = cp.Problem(cp.Maximize(ret - kappa * ret2 - lambd * ret3), constraints)
+    prob = cp.Problem(cp.Maximize(ret - kappa * ret2 - psi * ret3), constraints)
     prob.solve()
 
-    return w.value, w, prob, ret.value, ret2, ret3.value,lambd
+    return w.value, w, prob, ret.value, ret2, ret3.value
 
 
-def portfolio_contraint_lambda(date,ent,w_opti,ret_opti,ret3_opti,lambd_opti):
+def portfolio_contraint_tc_psi(date,ent,w_opti,ret_opti,ret3_opti,psi):
     sigma_mean = main.get_cov(date)
     if sigma_mean[0][0] == 0:
         print(sigma_mean)
-        return w_opti,0,0,ret_opti,0,ret3_opti,lambd_opti
-    mu_mean = np.zeros(len(sigma_mean))
-    for i in range(len(sigma_mean)):
-        mu_mean[i] = 0.5 * sqrt(sigma_mean[i][i])
+        return w_opti,0,0,ret_opti,0,ret3_opti
+    mu_mean = get_mu(sigma_mean)
     try:
-        w_rob,w,prob,ret,ret2,ret3,lambd = weight_cp_mean_lambda(w_opti,sigma_mean,mu_mean,0.25,date,lambd_opti,ent)
+        w_rob,w,prob,ret,ret2,ret3 = weight_cp_mean_tc(w_opti,sigma_mean,mu_mean,0.5,date,psi,ent)
     except:
         print("fail")
-        return w_opti,0,0,ret_opti,0,ret3_opti,lambd_opti
-    return w_rob,w,prob,ret,ret2,ret3,lambd
+        return w_opti,0,0,ret_opti,0,ret3_opti
+    return w_rob,w,prob,ret,ret2,ret3
 
 
 
 
 
 """Determination des donnees sur toute la periode"""
-def portfolio_construction(ent):
-    w_opti,w,prob,ret,ret2,vol_mean = portfolio_contraint(str(all_dates[30]),ent)
+def portfolio_construction_tc(ent=10,psi=0.02):
+    w_opti,w,prob,ret,ret2,vol_mean = portfolio_contraint_tc(str(all_dates[30]),ent)
 
     portfolio_over_time = []
     portfolio_return = [ret]
     portfolio_risk = [vol_mean]
 
     ret3 = vol_mean
-    lambd = 0
 
     for i in range(len(all_dates[31:])):
-        w_rob,w,prob,ret,ret2,ret3,lambd = portfolio_contraint_lambda(str(all_dates[31+i]),ent,w_opti,ret,ret3,lambd)
+        w_rob,w,prob,ret,ret2,ret3 = portfolio_contraint_tc_psi(str(all_dates[31+i]),ent,w_opti,ret,ret3,psi)
         portfolio_over_time.append(w_rob)
         portfolio_return.append(ret)
         portfolio_risk.append(ret3)
@@ -185,39 +181,21 @@ def portfolio_construction(ent):
     return portfolio_over_time,portfolio_return,portfolio_risk
 
 
-portfolio_small,portfolio_medium,portfolio_large = [portfolio_construction(75),portfolio_construction(150),portfolio_construction(300)]
+portfolio_value = portfolio_construction_tc(10,0.02)
 
 
-def get_all_portfolios(portfolio):
+def get_portfolios(portfolio):
     liste=[]
     portfolio_w,portfolio_ret,portfolio_risk = portfolio
     for i in range(len(all_dates[30:len(all_dates)-1])):
         date = all_dates[30 + i]
         print(date)
         w,ret,risk = portfolio_w[i],portfolio_ret[i],portfolio_risk[i]
-        try:
-            liste.append([str(date)[0:10],str(ret),str(risk)]+[str(x) for x in w])
-        except:
-            pass
+        liste.append([str(date)[0:10],str(ret),str(risk)]+[str(x) for x in w])
     return liste
 
 import csv
-with open('softConstraintsOptiSmall.csv','w',newline="") as result_file:
+with open('transactionCost.csv','w',newline="") as result_file:
     wr = csv.writer(result_file,delimiter=";")
-    wr.writerows(get_all_portfolios(portfolio_small))
+    wr.writerows(get_portfolios(portfolio_value))
 
-with open('softConstraintsOptiMedium.csv','w',newline="") as result_file:
-    wr = csv.writer(result_file,delimiter=";")
-    wr.writerows(get_all_portfolios(portfolio_medium))
-
-with open('softConstraintsOptiLarge.csv','w',newline="") as result_file:
-    wr = csv.writer(result_file,delimiter=";")
-    wr.writerows(get_all_portfolios(portfolio_large))
-
-
-ret_small,_,_=portfolio_small
-ret_medium,_,_=portfolio_medium
-ret_large,_,_=portfolio_large
-
-#plt.plot(all_dates[30:],ret_small,all_dates[30:],ret_medium,all_dates[30:],ret_large)
-#plt.show()
