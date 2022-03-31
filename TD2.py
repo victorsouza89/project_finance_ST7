@@ -18,7 +18,7 @@ path = "DataProjets.xlsx"
 df2 = pd.read_excel(path, sheet_name="MarketCaps")
 df2 = df2.rename(columns={"Unnamed: 0": "date"})
 base=pd.read_csv('indicators.csv',sep=';')
-opti_weights=pd.read_csv('weights_opti.csv',sep=';')
+opti_weights=pd.read_csv('outputCP.csv',sep=';')
 #print(opti_weights)
 def get_delta(rho,volatility):
     n=len(volatility[0])
@@ -178,7 +178,7 @@ def performance_sector_opti(sector):
     for j,date in enumerate(dates):
         try:
             companies_sector=main.sector_sorting(date)[sector]
-            mu=main.mu_estimate_sector(date,companies_sector,lg=6000)
+            mu=main.mu_estimate_sector(date,companies_sector,lg=300)
             rt=0
             company_weight=[]
             for c in companies_sector:
@@ -189,11 +189,11 @@ def performance_sector_opti(sector):
                 w_t_i = company_weight[i]
                 r_t_i = mu[i]
                 rt+=w_t_i*r_t_i
-            #print(rt)
+            print(rt)
             r[date]=[rt]
 
         except:
-            #print('fail')
+            print('fail')
             r[date]=[0]
         
     return r
@@ -228,3 +228,7 @@ def risk_sector_opti(sector):
     return risque
 
 
+sector=[4,5,6,7,8,9,10,11,14]
+for s in sector:
+    print(s)
+    performance_sector_opti(s)

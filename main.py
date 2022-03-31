@@ -397,7 +397,7 @@ def cov_estimate_sector(date,companies,perf_list=perf_list,lg=600):
         
 def NormalizeData(data):
     tot=np.sum(data)
-    print(tot)
+    #print(tot)
     return [1/tot*x for x in data]
 
 def performance_sector(sector):
