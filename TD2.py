@@ -178,7 +178,7 @@ def performance_sector_opti(sector):
     for j,date in enumerate(dates):
         try:
             companies_sector=main.sector_sorting(date)[sector]
-            mu=main.mu_estimate_sector(date,companies_sector,lg=300)
+            mu=main.mu_estimate_sector(date,companies_sector,lg=6000)
             rt=0
             company_weight=[]
             for c in companies_sector:
@@ -189,23 +189,16 @@ def performance_sector_opti(sector):
                 w_t_i = company_weight[i]
                 r_t_i = mu[i]
                 rt+=w_t_i*r_t_i
-            print(rt)
+            #print(rt)
             r[date]=[rt]
 
         except:
-            print('fail')
+            #print('fail')
             r[date]=[0]
         
     return r
 
-print('9')
-performance_sector_opti(9)
-print('10')
-performance_sector_opti(10)
-print('11')
-performance_sector_opti(11)
-print('14')
-performance_sector_opti(14)
+
 
 def risk_sector_opti(sector):
     dates=df2["date"]
