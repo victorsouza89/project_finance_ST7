@@ -397,6 +397,7 @@ def cov_estimate_sector(date,companies,perf_list=perf_list,lg=600):
         
 def NormalizeData(data):
     tot=np.sum(data)
+    print(tot)
     return [1/tot*x for x in data]
 
 def performance_sector(sector):
@@ -418,11 +419,11 @@ def performance_sector(sector):
                 w_t_i = company_weight[i]
                 r_t_i = mu[i]
                 rt+=w_t_i*r_t_i
-            print(rt)
+            #print(rt)
             r[date]=[rt]
 
         except:
-            print('fail')
+            #print('fail')
             r[date]=[0]
         
     return r
@@ -464,10 +465,7 @@ def risk_sector(sector):
     return risque
 
 
-sector=[4,5,6,7,8,9,10,11,14]
-for s in sector:
-    print(s)
-    risk_sector(s)
+
 
 
 '''
